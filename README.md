@@ -7,7 +7,7 @@ leave requests and monthly payroll, with two roles: **Admin** and **Employee**.
 
 | | Address |
 |---|---|
-| **Website (frontend)** | https://hrms-frontend-azure-seven.vercel.app |
+| **Website (frontend)** | https://frontend-tan-beta-88.vercel.app |
 | **API (backend)** | https://hrms-backend-omega-pied.vercel.app (health check: `/api/health`) |
 
 Both are hosted on Vercel and redeploy automatically on every push to `main`

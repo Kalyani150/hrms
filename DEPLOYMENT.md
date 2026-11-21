@@ -5,7 +5,7 @@ Two Vercel projects from the same GitHub repository, plus a free MongoDB Atlas d
 | Project | Root directory | What it is | Example address |
 |---|---|---|---|
 | **hrms-backend** | `backend` | Express API, run as a serverless function | `https://hrms-backend-xxxx.vercel.app` |
-| **hrms-frontend** | `frontend` | React site; it forwards `/api` to the backend | `https://hrms-frontend-xxxx.vercel.app` |
+| **frontend** | `frontend` | React site; it forwards `/api` to the backend | `https://frontend-xxxx.vercel.app` |
 
 Because the site forwards `/api/...` to the backend, the browser only ever talks to the frontend's
 address. The login cookie therefore stays first-party and works in every browser. Refreshing any page
@@ -42,7 +42,7 @@ the dashboard with **Root Directory = `backend`**. Then open
 On the first request after a deploy the backend creates the first admin from `ADMIN_*` if the database
 has no admin yet (look for `First admin created` in the function logs).
 
-## 3. Frontend project (`hrms-frontend`)
+## 3. Frontend project (`frontend`)
 
 1. Edit `frontend/vercel.json` and replace `YOUR-BACKEND.vercel.app` with the backend's real address,
    then commit and push.
