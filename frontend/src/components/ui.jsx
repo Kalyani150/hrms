@@ -164,6 +164,24 @@ export function SkeletonRows({ cols, rows = 5 }) {
   );
 }
 
+// Grey pulsing list items shown on phones while a card list is loading
+export function SkeletonList({ count = 4 }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <li key={i} aria-hidden="true" className="animate-pulse space-y-3 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-slate-200" />
+            <div className="h-4 w-1/2 rounded bg-slate-200" />
+          </div>
+          <div className="h-3 w-3/4 rounded bg-slate-200" />
+          <div className="h-3 w-1/2 rounded bg-slate-200" />
+        </li>
+      ))}
+    </>
+  );
+}
+
 // Grey pulsing cards shown while a card grid is loading
 export function SkeletonCards({ count = 8, height = "h-64" }) {
   return (

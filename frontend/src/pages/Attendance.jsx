@@ -4,7 +4,7 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, StatCard, inputCls, th, td
+  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonList, StatCard, inputCls, th, td
 } from "../components/ui";
 
 const minutesBetween = (a, b) =>
@@ -148,7 +148,42 @@ export default function Attendance() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Phones: one card per record, with check-in, check-out, hours and status all visible */}
+        <ul className="divide-y divide-slate-100 sm:hidden">
+          {loading ? <SkeletonList /> : shown.map((r) => (
+            <li key={r._id} className={`px-5 py-4 ${r.status === "Late" ? "bg-amber-50/30" : ""}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar name={r.employee?.name} size="h-9 w-9 text-xs" />
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-800">{r.employee?.name}</p>
+                    <p className="text-xs text-slate-500">{dayLabel(r.date)}</p>
+                  </div>
+                </div>
+                <Badge value={r.status} />
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-slate-400">Check in</p>
+                  <p className="font-medium text-emerald-700">{clock(r.checkIn)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Check out</p>
+                  <p className="font-medium text-rose-600">{r.checkOut ? clock(r.checkOut) : "--"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Hours</p>
+                  <p className="font-medium text-slate-800">{hours(r.checkIn, r.checkOut)}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+          {!loading && shown.length === 0 && (
+            <li className="px-5 py-12 text-center text-sm text-slate-400">No attendance records</li>
+          )}
+        </ul>
+
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[750px] text-left">
             <thead className="bg-slate-50">
               <tr>

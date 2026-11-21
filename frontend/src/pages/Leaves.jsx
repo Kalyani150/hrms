@@ -4,7 +4,7 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, Field, Modal, StatCard,
+  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonList, Field, Modal, StatCard,
   inputCls, btnPrimary, btnGhost, th, td
 } from "../components/ui";
 import FormField from "../components/FormField";
@@ -136,7 +136,54 @@ export default function Leaves() {
           ))}
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Phones: one card per request with every detail and the admin buttons visible */}
+        <ul className="divide-y divide-slate-100 sm:hidden">
+          {loading ? <SkeletonList /> : shown.map((l) => (
+            <li key={l._id} className="space-y-3 px-5 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar name={l.employee?.name} size="h-9 w-9 text-xs" />
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-800">{l.employee?.name}</p>
+                    {l.employee?.department && (
+                      <p className="text-xs text-slate-500">{l.employee.department}</p>
+                    )}
+                  </div>
+                </div>
+                <Badge value={l.status} />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${typeTone[l.type] || typeTone.Other}`}>
+                  {l.type}
+                </span>
+                <span className="text-slate-700">
+                  {l.startDate === l.endDate ? fmt(l.startDate) : `${fmt(l.startDate)} → ${fmt(l.endDate)}`}
+                  {" · "}{days(l.startDate, l.endDate)} day{days(l.startDate, l.endDate) === 1 ? "" : "s"}
+                </span>
+              </div>
+              <p className="text-sm text-slate-600 [overflow-wrap:anywhere]">{l.reason}</p>
+              {user.role === "Admin" && l.status === "Pending" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => update(l._id, "Approved")}
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 py-2.5
+                    text-sm font-medium text-emerald-700 hover:bg-emerald-100">
+                    <Check size={16} /> Approve
+                  </button>
+                  <button onClick={() => update(l._id, "Rejected")}
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 py-2.5
+                    text-sm font-medium text-rose-700 hover:bg-rose-100">
+                    <X size={16} /> Reject
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+          {!loading && shown.length === 0 && (
+            <li className="px-5 py-12 text-center text-sm text-slate-400">No leave requests found</li>
+          )}
+        </ul>
+
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[900px] text-left">
             <thead className="bg-slate-50">
               <tr>

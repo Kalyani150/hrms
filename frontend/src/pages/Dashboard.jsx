@@ -279,7 +279,46 @@ function AdminDashboard({ user, data, reload }) {
         <div className="space-y-6 xl:col-span-2">
         <Card className="overflow-hidden">
           <div className="p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
-          <div className="overflow-x-auto">
+          {/* Phones: one card per request, so Approve / Reject are always visible */}
+          <ul className="divide-y divide-slate-100 sm:hidden">
+            {data.recentLeaves.map((l) => (
+              <li key={l._id} className="space-y-3 px-5 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar name={l.employee?.name} size="h-9 w-9 text-xs" />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-800">{l.employee?.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {l.type} · {l.startDate === l.endDate
+                          ? short(l.startDate)
+                          : `${short(l.startDate)} – ${short(l.endDate)}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge value={l.status} />
+                </div>
+                {l.status === "Pending" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => review(l._id, "Approved")}
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 py-2.5
+                      text-sm font-medium text-emerald-700 hover:bg-emerald-100">
+                      <Check size={16} /> Approve
+                    </button>
+                    <button onClick={() => review(l._id, "Rejected")}
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 py-2.5
+                      text-sm font-medium text-rose-700 hover:bg-rose-100">
+                      <X size={16} /> Reject
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))}
+            {data.recentLeaves.length === 0 && (
+              <li className="px-5 py-10 text-center text-sm text-slate-400">No leave requests yet</li>
+            )}
+          </ul>
+
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[620px] text-left">
               <thead className="bg-slate-50">
                 <tr>
@@ -512,7 +551,25 @@ function EmployeeDashboard({ user, data, reload }) {
 
           <Card className="overflow-hidden">
             <div className="p-5"><CardTitle to="/attendance">Recent Attendance</CardTitle></div>
-            <div className="overflow-x-auto">
+            {/* Phones: one row per day with the status always visible */}
+            <ul className="divide-y divide-slate-100 sm:hidden">
+              {data.attendance.slice(0, 5).map((a) => (
+                <li key={a._id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                  <div>
+                    <p className="font-medium text-slate-800">{a.date}</p>
+                    <p className="text-xs text-slate-500">
+                      {time(a.checkIn)} → {a.checkOut ? time(a.checkOut) : "--"}
+                    </p>
+                  </div>
+                  <Badge value={a.status} />
+                </li>
+              ))}
+              {data.attendance.length === 0 && (
+                <li className="px-5 py-10 text-center text-sm text-slate-400">No attendance yet</li>
+              )}
+            </ul>
+
+            <div className="hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-slate-50">
                   <tr>{["Date", "Check In", "Check Out", "Status"].map((h) =>
