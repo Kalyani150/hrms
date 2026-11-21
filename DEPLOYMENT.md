@@ -1,112 +1,80 @@
-# Deploying the HRMS (free tier)
+# Deploying the HRMS on Vercel (free tier)
 
-Three free services, set up in this order:
+Two Vercel projects from the same GitHub repository, plus a free MongoDB Atlas database:
 
-1. **MongoDB Atlas** - the database
-2. **Render** - the backend API
-3. **Vercel** - the website (it also forwards `/api` to Render, so the login cookie stays first-party)
+| Project | Root directory | What it is | Example address |
+|---|---|---|---|
+| **hrms-backend** | `backend` | Express API, run as a serverless function | `https://hrms-backend-xxxx.vercel.app` |
+| **hrms-frontend** | `frontend` | React site; it forwards `/api` to the backend | `https://hrms-frontend-xxxx.vercel.app` |
 
-You will need to create the accounts yourself. Keep every password and connection string private.
-
----
-
-## 0. Put the code on GitHub
-
-```bash
-cd "Human Resource Management System"
-git init
-git add .
-git status          # check that NO .env file and no node_modules are listed
-git commit -m "HRMS"
-# create an empty repository on github.com, then:
-git remote add origin https://github.com/<you>/<repo>.git
-git push -u origin main
-```
-
-The `.gitignore` files already exclude `.env`, `node_modules` and the local database.
+Because the site forwards `/api/...` to the backend, the browser only ever talks to the frontend's
+address. The login cookie therefore stays first-party and works in every browser. Refreshing any page
+(for example `/employees`) works too, because `frontend/vercel.json` sends every non-API path to
+`index.html`.
 
 ## 1. MongoDB Atlas
 
-1. Sign up at https://www.mongodb.com/atlas and create a **free (M0)** cluster.
-2. **Database Access** -> add a database user (username + a strong password, no `@ : /` characters).
-3. **Network Access** -> add `0.0.0.0/0` (Render's free servers have changing addresses).
-4. **Connect -> Drivers** -> copy the connection string and put the database name before the `?`:
+1. Create a free **M0** cluster at https://www.mongodb.com/atlas.
+2. **Database Access** -> add a database user (strong password, no `@ : /` characters).
+3. **Network Access** -> add `0.0.0.0/0` (Vercel functions have changing addresses).
+4. **Connect -> Drivers** -> copy the string and put the database name before the `?`:
 
    `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/hrms?retryWrites=true&w=majority`
 
-   This is your `MONGO_URI`.
+## 2. Backend project (`hrms-backend`)
 
-## 2. Render (backend)
+Environment variables (Project -> Settings -> Environment Variables, for **Production**):
 
-1. Sign up at https://render.com and connect your GitHub account.
-2. **New -> Blueprint**, choose your repository (it reads `render.yaml`).
-   *Or* **New -> Web Service** with: Root Directory `backend`, Build `npm install`, Start `npm start`.
-3. Fill in the environment variables:
+| Variable | Value |
+|---|---|
+| `MONGO_URI` | the Atlas string from step 1 |
+| `JWT_SECRET` | a long random string, e.g. `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
+| `ADMIN_EMAIL` | the email you will sign in with |
+| `ADMIN_PASSWORD` | 8+ characters with an uppercase letter, a lowercase letter, a number and a symbol |
+| `ADMIN_NAME` | `HR Administrator` (letters and spaces only) |
+| `FRONTEND_URL` | the frontend's address (set it after step 3) |
+| `TRUST_PROXY` | `1` |
 
-   | Variable | Value |
-   |---|---|
-   | `MONGO_URI` | the Atlas string from step 1 |
-   | `JWT_SECRET` | generated automatically by the blueprint (or any 64+ random characters) |
-   | `FRONTEND_URL` | your Vercel address, e.g. `https://hrms-yourname.vercel.app` (set it after step 4) |
-   | `NODE_ENV` | `production` |
-   | `TRUST_PROXY` | `1` |
-   | `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` | your first admin account |
+Deploy with the Vercel CLI from the `backend` folder (`npx vercel --prod`) or import the repository in
+the dashboard with **Root Directory = `backend`**. Then open
+`https://<backend-address>/api/health`; it should say `"database":"connected"`.
 
-4. When it finishes, open `https://<your-service>.onrender.com/api/health` - it should say
-   `"database":"connected"`.
+On the first request after a deploy the backend creates the first admin from `ADMIN_*` if the database
+has no admin yet (look for `First admin created` in the function logs).
 
-The free plan sleeps after about 15 minutes without traffic, so the first request after a pause
-takes ~30-60 seconds.
+## 3. Frontend project (`hrms-frontend`)
 
-## 3. The first admin account
-
-Nothing to do here: when the backend starts and the database has **no admin yet**, it creates one
-from `ADMIN_EMAIL`, `ADMIN_PASSWORD` and `ADMIN_NAME`. Look for `First admin created: ...` in the
-Render logs. After that, the variables are ignored on later starts.
-
-The password must have 8+ characters with an uppercase letter, a lowercase letter, a number and a
-symbol; otherwise the log says `First admin was not created: ...` and you can fix the variable and
-redeploy.
-
-(Optional manual route from your own computer: set `MONGO_URI`, `ADMIN_EMAIL` and `ADMIN_PASSWORD`
-in a PowerShell session and run `npm run seed` inside `backend/`.)
-
-## 4. Vercel (frontend)
-
-1. Open `frontend/vercel.json` and replace `YOUR-BACKEND-NAME.onrender.com` with your real Render
-   address, then commit and push.
-2. Sign up at https://vercel.com, **Add New -> Project**, import the repository.
-3. Settings: **Root Directory** `frontend`, Framework **Vite**, Build `npm run build`, Output `dist`.
+1. Edit `frontend/vercel.json` and replace `YOUR-BACKEND.vercel.app` with the backend's real address,
+   then commit and push.
+2. Deploy with `npx vercel --prod` from the `frontend` folder, or import the repository with
+   **Root Directory = `frontend`**, Framework **Vite**, Build `npm run build`, Output `dist`.
    No environment variable is needed (`frontend/.env.production` already sets `VITE_API_URL=/api`).
-4. Deploy, then copy your Vercel address.
+3. Set `FRONTEND_URL` on the backend project to the frontend's address and redeploy the backend.
 
-## 5. Connect the two
+## Checklist
 
-Go back to Render -> your service -> **Environment** -> set `FRONTEND_URL` to the Vercel address
-(no trailing slash) and let it redeploy. Open the Vercel address and sign in.
-
-## Checklist after deploying
-
-- [ ] `https://<render>/api/health` shows the database as connected
-- [ ] You can sign in on the Vercel address and refresh the page without being logged out
+- [ ] `https://<backend>/api/health` shows the database as connected
+- [ ] The frontend address opens the login page and you can sign in
+- [ ] Refreshing `/dashboard`, `/employees`, `/payroll` ... never shows "page not found"
+- [ ] You are still signed in after refreshing
 - [ ] Change the admin password under **Profile -> Change password**
-- [ ] Add a test employee, check in as that employee, apply for leave, approve it, generate payroll
+- [ ] Add a test employee, check in as them, apply for leave, approve it, generate payroll
 - [ ] Delete the test data before real use
 
 ## Troubleshooting
 
 | Symptom | Likely cause |
 |---|---|
-| "Login failed" immediately | Backend asleep (wait a minute and retry), or `vercel.json` still has `YOUR-BACKEND-NAME` |
-| Browser console shows a CORS error | `FRONTEND_URL` on Render does not exactly match the Vercel address |
-| Signs in, then is sent back to login | Cookie blocked: make sure the site is opened over `https://` on the Vercel address and requests go to `/api` (not directly to onrender.com) |
-| `429 Too many attempts` | 20 failed logins from one address in 15 minutes - wait, or restart the Render service |
-| Cannot sign in as the admin, log says "First admin was not created" | `ADMIN_PASSWORD` breaks the strength rule, or `ADMIN_EMAIL` is not a valid email |
-| Server exits at start with "Missing required env variable" | `MONGO_URI` or `JWT_SECRET` not set on Render |
-| `MongoServerError: bad auth` | Wrong Atlas username or password in `MONGO_URI` |
+| Health shows HTTP 500 "Server error" | `MONGO_URI` / `JWT_SECRET` missing, or Atlas Network Access does not allow `0.0.0.0/0`. Open **Logs** on the backend project for the exact reason |
+| `bad auth` in the logs | Wrong Atlas username or password in `MONGO_URI` |
+| "Login failed" on the site | `frontend/vercel.json` still contains the `YOUR-BACKEND` placeholder, or the backend is not deployed |
+| Page not found after refresh | `frontend/vercel.json` was changed so that the second rewrite (`/index.html`) is missing |
+| Cannot sign in as admin, log says "First admin was not created" | `ADMIN_PASSWORD` breaks the strength rule, or `ADMIN_EMAIL` is invalid |
+| `429 Too many attempts` | Many failed logins in 15 minutes; wait, then retry |
 
-## Keeping it safe
+## Notes and limits
 
-- Never commit `.env` files or paste connection strings into chat or issues.
-- Use a long random `JWT_SECRET`. Changing it logs everyone out.
-- If a password or connection string was shared by accident, change it in Atlas / the app and update Render.
+- The login rate limiter keeps its counters in memory, and each serverless instance has its own, so on
+  Vercel it is a soft limit. Use a strong admin password.
+- Vercel's free plan stops a request after 10 seconds, which is plenty for this app.
+- Never commit `.env` files or paste connection strings into chat. Change any password that was shared.

@@ -1,4 +1,4 @@
-# HRMS - Human Resource Management System
+﻿# HRMS - Human Resource Management System
 
 A MERN-stack (MongoDB, Express, React, Node) application for managing employees, daily attendance,
 leave requests and monthly payroll, with two roles: **Admin** and **Employee**.
@@ -27,7 +27,6 @@ Salary rule: `Net salary = Basic + Bonus - Deductions` (never below 0).
 ```
 backend/    Express API  (models, routes, middleware, utils/validation.js, scripts/)
 frontend/   React app    (pages, components, context, utils/validation.js)
-render.yaml Render blueprint for the backend
 DEPLOYMENT.md  Step-by-step hosting guide
 ```
 
