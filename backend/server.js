@@ -6,6 +6,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
+const { ensureAdmin } = require("./scripts/seedAdmin");
 
 const app = express();
 
@@ -80,8 +81,17 @@ app.use((err, req, res, next) => {
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log("MongoDB connected");
+
+    // A fresh database has no users: create the first admin from ADMIN_* so you can sign in
+    try {
+      const seeded = await ensureAdmin({ onlyIfNoAdmin: true });
+      if (seeded.created) console.log(`First admin created: ${seeded.email}`);
+    } catch (err) {
+      console.warn("First admin was not created:", err.message);
+    }
+
     app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
   })
   .catch((err) => {

@@ -58,22 +58,18 @@ The `.gitignore` files already exclude `.env`, `node_modules` and the local data
 The free plan sleeps after about 15 minutes without traffic, so the first request after a pause
 takes ~30-60 seconds.
 
-## 3. Create the first admin account
+## 3. The first admin account
 
-The production database is empty. From your own computer, run the seed script against Atlas
-(PowerShell):
+Nothing to do here: when the backend starts and the database has **no admin yet**, it creates one
+from `ADMIN_EMAIL`, `ADMIN_PASSWORD` and `ADMIN_NAME`. Look for `First admin created: ...` in the
+Render logs. After that, the variables are ignored on later starts.
 
-```powershell
-cd backend
-$env:MONGO_URI = "<your Atlas connection string>"
-$env:ADMIN_EMAIL = "you@example.com"
-$env:ADMIN_PASSWORD = "A-strong-password-1!"
-$env:ADMIN_NAME = "HR Administrator"
-npm run seed
-```
+The password must have 8+ characters with an uppercase letter, a lowercase letter, a number and a
+symbol; otherwise the log says `First admin was not created: ...` and you can fix the variable and
+redeploy.
 
-It prints `Admin created: ...`. The password must have 8+ characters with an uppercase letter, a
-lowercase letter, a number and a symbol.
+(Optional manual route from your own computer: set `MONGO_URI`, `ADMIN_EMAIL` and `ADMIN_PASSWORD`
+in a PowerShell session and run `npm run seed` inside `backend/`.)
 
 ## 4. Vercel (frontend)
 
@@ -105,6 +101,7 @@ Go back to Render -> your service -> **Environment** -> set `FRONTEND_URL` to th
 | Browser console shows a CORS error | `FRONTEND_URL` on Render does not exactly match the Vercel address |
 | Signs in, then is sent back to login | Cookie blocked: make sure the site is opened over `https://` on the Vercel address and requests go to `/api` (not directly to onrender.com) |
 | `429 Too many attempts` | 20 failed logins from one address in 15 minutes - wait, or restart the Render service |
+| Cannot sign in as the admin, log says "First admin was not created" | `ADMIN_PASSWORD` breaks the strength rule, or `ADMIN_EMAIL` is not a valid email |
 | Server exits at start with "Missing required env variable" | `MONGO_URI` or `JWT_SECRET` not set on Render |
 | `MongoServerError: bad auth` | Wrong Atlas username or password in `MONGO_URI` |
 
