@@ -1,0 +1,28 @@
+# Render "Blueprint": describes the backend service so it can be created in one click.
+# (Secrets marked sync:false are typed into the Render dashboard, never stored here.)
+services:
+  - type: web
+    name: hrms-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: ADMIN_NAME
+        value: HR Administrator
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

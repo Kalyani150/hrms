@@ -1,0 +1,45 @@
+
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f8fafc;
+}
+
+/* Hide scrollbars everywhere (pages, forms, tables) - scrolling still works */
+html,
+body,
+* {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* old Edge / IE */
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;              /* Chrome, Edge, Safari */
+  width: 0;
+  height: 0;
+}
+
+/* Payslip printing: the payslip lives outside #root and is only shown on paper */
+#payslip-print { display: none; }
+
+@page { margin: 14mm; }
+
+@media print {
+  body.printing-payslip { background: #fff; }
+  body.printing-payslip #root { display: none !important; }
+  body.printing-payslip #payslip-print {
+    display: block !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+button,
+select,
+input[type="checkbox"],
+input[type="date"],
+input[type="month"] { cursor: pointer; }
+input, select, textarea { outline-color: #2563eb; }

@@ -1,0 +1,21 @@
+# Dependencies and build output
+node_modules/
+dist/
+
+# Secrets - never commit real environment files
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Local development database (created by `npm run db`)
+backend/.data/
+
+# Logs and OS / editor files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
