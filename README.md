@@ -17,7 +17,7 @@ Both are hosted on Vercel and redeploy automatically on every push to `main`
 
 | Area | Admin | Employee |
 |---|---|---|
-| Authentication | Login / logout, HTTP-only JWT cookie, bcrypt-hashed passwords | Same |
+| Authentication | Register, login / logout, forgot and reset password, HTTP-only JWT cookie, bcrypt-hashed passwords | Same |
 | Dashboard | Totals, present today, pending/approved leaves, departments, payroll overview, recent employees, attendance trend | Profile card, today's check-in status, recent attendance, leave requests, latest payslip |
 | Employees | Add, edit, deactivate / reactivate, search, filter by department and status, sort | View and edit own profile (name, phone, address), change password |
 | Attendance | See everyone's records, filter by date | Check in / check out (Present or Late), own history |
@@ -78,11 +78,12 @@ Never commit `.env`.
 
 ## API overview
 
-All routes are under `/api`. Everything except `login` and `health` needs a logged-in user (cookie).
+All routes are under `/api`. Everything except `register`, `login`, `forgot-password`, `reset-password` and `health` needs a logged-in user (cookie).
 
 | Route | Access | Purpose |
 |---|---|---|
 | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | public / user | Session |
+| `POST /auth/register`, `POST /auth/forgot-password`, `POST /auth/reset-password` | public | Sign up as Employee; emailed 15-minute reset link |
 | `PUT /auth/profile`, `PUT /auth/change-password` | user | Own profile and password |
 | `GET /employees`, `POST /employees`, `PUT /employees/:id` | admin | List, create, update |
 | `PATCH /employees/:id/deactivate`, `PATCH /employees/:id/reactivate` | admin | Account status |
@@ -113,6 +114,7 @@ The same rules run in the browser (`frontend/src/utils/validation.js`) and on th
 - The login token lives in an HTTP-only cookie (`SameSite=Lax`, `Secure` in production).
 - CORS only allows `FRONTEND_URL`; `helmet` sets security headers.
 - Only failed login attempts are rate-limited (20 per 15 minutes per address).
+- Register, forgot-password and reset-password are rate-limited too. Reset links need the `SMTP_*` variables in `backend/.env` (without them the link is shown on the page in development only).
 - Admin-only routes are protected on the server, not just hidden in the interface.
 - One attendance record per employee per day and one payslip per employee per month (unique indexes).
 

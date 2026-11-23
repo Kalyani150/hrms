@@ -1,9 +1,11 @@
 const express = require("express");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { z } = require("zod");
 const User = require("../models/User");
 const { protect } = require("../middleware/auth");
 const { nameSchema, emailSchema, phoneSchema, passwordSchema } = require("../utils/validation");
+const { sendMail } = require("../utils/mailer");
 
 const router = express.Router();
 
@@ -11,6 +13,20 @@ const loginSchema = z.object({
   email: emailSchema,
   // sign-in only needs a value; complexity rules apply when a password is created/changed
   password: z.string().min(1, "Password is required")
+});
+
+// Public sign-up always creates an Employee; admins are created by the seed script
+const registerSchema = z.object({
+  name: nameSchema,
+  email: emailSchema,
+  password: passwordSchema
+});
+
+const forgotSchema = z.object({ email: emailSchema });
+
+const resetSchema = z.object({
+  token: z.string().min(1, "Reset link is invalid"),
+  password: passwordSchema
 });
 
 const passwordChangeSchema = z.object({
@@ -49,6 +65,79 @@ const publicUser = (u) => ({
   salary: u.salary,
   joiningDate: u.joiningDate,
   status: u.status
+});
+
+const RESET_MINUTES = 15;
+const hashToken = (t) => crypto.createHash("sha256").update(t).digest("hex");
+
+// POST /api/auth/register
+router.post("/register", async (req, res) => {
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: parsed.error.issues[0].message });
+  }
+
+  if (await User.exists({ email: parsed.data.email })) {
+    return res.status(409).json({ message: "An account with this email already exists" });
+  }
+
+  const user = await User.create({ ...parsed.data, role: "Employee" });
+  res.cookie("token", signToken(user), cookieOptions);
+  res.status(201).json({ user: publicUser(user) });
+});
+
+// POST /api/auth/forgot-password
+// Always answers the same way so the form cannot be used to find out which emails are registered.
+router.post("/forgot-password", async (req, res) => {
+  const parsed = forgotSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: parsed.error.issues[0].message });
+  }
+
+  const response = { message: "If that email is registered, a reset link has been sent." };
+  const user = await User.findOne({ email: parsed.data.email, status: "Active" });
+
+  if (user) {
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetTokenHash = hashToken(token);
+    user.resetTokenExpires = new Date(Date.now() + RESET_MINUTES * 60 * 1000);
+    await user.save();
+
+    const link = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${token}`;
+    const sent = await sendMail({
+      to: user.email,
+      subject: "Reset your HRMS password",
+      text: `Use this link to choose a new password (valid for ${RESET_MINUTES} minutes):\n\n${link}\n\nIf you did not ask for this, ignore this email.`
+    });
+
+    // Without SMTP settings (local development only) the link is returned so the flow can be tried
+    if (!sent && process.env.NODE_ENV !== "production") response.devResetLink = link;
+  }
+
+  res.json(response);
+});
+
+// POST /api/auth/reset-password
+router.post("/reset-password", async (req, res) => {
+  const parsed = resetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: parsed.error.issues[0].message });
+  }
+
+  const user = await User.findOne({
+    resetTokenHash: hashToken(parsed.data.token),
+    resetTokenExpires: { $gt: new Date() }
+  }).select("+resetTokenHash +resetTokenExpires");
+
+  if (!user) {
+    return res.status(400).json({ message: "This reset link is invalid or has expired" });
+  }
+
+  user.password = parsed.data.password; // hashed by the pre-save hook
+  user.resetTokenHash = undefined;
+  user.resetTokenExpires = undefined;
+  await user.save();
+  res.json({ message: "Password updated. You can now sign in." });
 });
 
 // POST /api/auth/login

@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
   password: { type: String, required: true, select: false },
+  // Password reset: only a hash of the emailed token is stored
+  resetTokenHash: { type: String, select: false },
+  resetTokenExpires: { type: Date, select: false },
   role: {
     type: String,
     enum: ["Admin", "Employee"],

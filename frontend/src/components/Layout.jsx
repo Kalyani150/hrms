@@ -45,7 +45,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb]">
+    <div className="min-h-dvh bg-[#f5f7fb]">
       {open && (
         <div
           className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
@@ -103,7 +103,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      <div className="lg:ml-64">
+      <div className="min-w-0 lg:ml-64">
         <header className="sticky top-0 z-30 flex h-16 items-center
           justify-between border-b border-slate-200/70 bg-white/80 px-5
           backdrop-blur md:px-8">
@@ -121,7 +121,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl p-4 md:p-8">
+        <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

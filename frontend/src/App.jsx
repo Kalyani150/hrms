@@ -8,7 +8,12 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 
-import Login from "./pages/Login";
+import PublicRoute from "./components/PublicRoute";
+
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import Attendance from "./pages/Attendance";
@@ -23,7 +28,12 @@ export default function App() {
         <Toaster position="top-right" />
 
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+          </Route>
 
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>

@@ -31,19 +31,22 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Limit brute-force password guessing: only FAILED login attempts count, and only on /login
-// (page loads call /auth/me, so limiting all of /api/auth would log real users out)
-app.use(
-  "/api/auth/login",
+// Limit brute-force guessing on the public auth forms. Only the listed paths are limited
+// (page loads call /auth/me, so limiting all of /api/auth would log real users out).
+const authLimiter = (limit, extra = {}) =>
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 20,
-    skipSuccessfulRequests: true,
+    limit,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { message: "Too many attempts, please try again later." }
-  })
-);
+    message: { message: "Too many attempts, please try again later." },
+    ...extra
+  });
+
+app.use("/api/auth/login", authLimiter(20, { skipSuccessfulRequests: true }));
+app.use("/api/auth/register", authLimiter(10));
+app.use("/api/auth/forgot-password", authLimiter(5));
+app.use("/api/auth/reset-password", authLimiter(10));
 
 app.get("/api/health", (req, res) => {
   res.json({
