@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Lock, Eye, EyeOff, Check, Circle } from "lucide-react";
 import FormField from "./FormField";
-import { ALLOW_PASSWORD_KEY, sanitizePassword } from "../utils/validation";
+import { ALLOW_PASSWORD_KEY, sanitizePassword, PASSWORD_SYMBOLS } from "../utils/validation";
 
 const RULES = [
   ["At least 8 characters", (v) => v.length >= 8],
@@ -27,6 +27,12 @@ export default function PasswordField({ showRules = false, value, ...props }) {
           </button>
         }
         {...props} />
+
+      {showRules && (
+        <p className="mt-1 text-xs text-slate-400">
+          Letters, numbers and these symbols only: {PASSWORD_SYMBOLS}
+        </p>
+      )}
 
       {showRules && value && (
         <ul className="mt-2 grid gap-x-4 gap-y-1 text-xs sm:grid-cols-2">

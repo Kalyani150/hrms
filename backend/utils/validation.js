@@ -5,14 +5,14 @@ const { z } = require("zod");
 const NAME_REGEX = /^[A-Za-z]+( [A-Za-z]+)*$/;
 const EMAIL_REGEX = /^[a-zA-Z0-9]+([._-]?[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$/;
 const PHONE_REGEX = /^\d{10}$/;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,128}$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};:,.?])[A-Za-z0-9!@#$%^&*()_+\-=[\]{};:,.?]{8,128}$/;
 
 const MESSAGES = {
   name: "Name should contain only letters",
   nameLength: "Name must be 2 to 50 characters",
   email: "Enter a valid email (e.g. name@gmail.com)",
   phone: "Phone number must be 10 digits",
-  password: "Password must be 8-128 characters with uppercase, lowercase, number and symbol, and no spaces"
+  password: "Password must be 8-128 characters with uppercase, lowercase, number and one of these symbols: ! @ # $ % ^ & * ( ) _ + - = [ ] { } ; : , . ?"
 };
 
 // Full name: letters and single spaces only, 2-50 characters, trimmed

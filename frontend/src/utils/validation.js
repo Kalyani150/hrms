@@ -4,14 +4,14 @@
 export const NAME_REGEX = /^[A-Za-z]+( [A-Za-z]+)*$/;
 export const EMAIL_REGEX = /^[a-zA-Z0-9]+([._-]?[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$/;
 export const PHONE_REGEX = /^\d{10}$/;
-export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,128}$/;
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};:,.?])[A-Za-z0-9!@#$%^&*()_+\-=[\]{};:,.?]{8,128}$/;
 
 export const MESSAGES = {
   name: "Name should contain only letters",
   nameLength: "Name must be 2 to 50 characters",
   email: "Enter a valid email (e.g. name@gmail.com)",
   phone: "Phone number must be 10 digits",
-  password: "Password must be 8-128 characters with uppercase, lowercase, number and symbol, and no spaces"
+  password: "Password must be 8-128 characters with uppercase, lowercase, number and one of these symbols: ! @ # $ % ^ & * ( ) _ + - = [ ] { } ; : , . ?"
 };
 
 /* ---------- keystroke filters (also used to clean pasted text) ---------- */
@@ -23,9 +23,10 @@ export const ALLOW_TEXT_KEY = /[A-Za-z /&.-]/;
 // Email: letters, numbers, @ and only the symbols . _ -  (no spaces or other symbols)
 export const ALLOW_EMAIL_KEY = /[A-Za-z0-9@._-]/;
 
-// Passwords never contain spaces
-export const ALLOW_PASSWORD_KEY = /\S/;
-export const sanitizePassword = (v) => v.replace(/\s/g, "").slice(0, 128);
+// Passwords may only contain letters, numbers and these symbols
+export const PASSWORD_SYMBOLS = "! @ # $ % ^ & * ( ) _ + - = [ ] { } ; : , . ?";
+export const ALLOW_PASSWORD_KEY = /[A-Za-z0-9!@#$%^&*()_+\-=[\]{};:,.?]/;
+export const sanitizePassword = (v) => v.replace(/[^A-Za-z0-9!@#$%^&*()_+\-=[\]{};:,.?]/g, "").slice(0, 128);
 
 export const EMAIL_RULES_HINT =
   "Letters, numbers and . _ - before the @, then a domain like gmail.com or company.co.in. No spaces.";
