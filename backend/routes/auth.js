@@ -15,7 +15,8 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required")
 });
 
-// Public sign-up always creates an Employee; admins are created by the seed script
+// Public sign-up creates a Pending Employee that an admin must approve before it can sign in.
+// Admins are created by the seed script.
 const registerSchema = z.object({
   name: nameSchema,
   email: emailSchema,
@@ -81,9 +82,10 @@ router.post("/register", async (req, res) => {
     return res.status(409).json({ message: "An account with this email already exists" });
   }
 
-  const user = await User.create({ ...parsed.data, role: "Employee" });
-  res.cookie("token", signToken(user), cookieOptions);
-  res.status(201).json({ user: publicUser(user) });
+  await User.create({ ...parsed.data, role: "Employee", status: "Pending" });
+  res.status(201).json({
+    message: "Registration received. An administrator must approve your account before you can sign in."
+  });
 });
 
 // POST /api/auth/forgot-password
@@ -153,6 +155,9 @@ router.post("/login", async (req, res) => {
   // Same message for unknown email and wrong password
   if (!user || !(await user.comparePassword(password))) {
     return res.status(401).json({ message: "Invalid email or password" });
+  }
+  if (user.status === "Pending") {
+    return res.status(403).json({ message: "Your account is awaiting administrator approval" });
   }
   if (user.status !== "Active") {
     return res.status(403).json({ message: "Your account is inactive" });

@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema({
   joiningDate: { type: Date, default: Date.now },
   status: {
     type: String,
-    enum: ["Active", "Inactive"],
+    enum: ["Active", "Inactive", "Pending"], // Pending = self-registered, awaiting admin approval
     default: "Active"
   }
 }, { timestamps: true });

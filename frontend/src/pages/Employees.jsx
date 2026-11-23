@@ -132,6 +132,27 @@ export default function Employees() {
     }
   };
 
+  const approve = async (id) => {
+    try {
+      await api.patch(`/employees/${id}/approve`);
+      toast.success("Registration approved");
+      load();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to approve registration");
+    }
+  };
+
+  const reject = async (emp) => {
+    if (!window.confirm(`Reject and delete the registration from ${emp.name}?`)) return;
+    try {
+      await api.delete(`/employees/${emp._id}/reject`);
+      toast.success("Registration rejected");
+      load();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to reject registration");
+    }
+  };
+
   const reactivate = async (id) => {
     try {
       await api.patch(`/employees/${id}/reactivate`);
@@ -161,12 +182,29 @@ export default function Employees() {
   };
 
   const active = employees.filter((e) => e.status === "Active").length;
+  const inactive = employees.filter((e) => e.status === "Inactive").length;
+  const pending = employees.filter((e) => e.status === "Pending").length;
   const departments = [...new Set(employees.map((e) => e.department).filter(Boolean))];
   const payroll = employees.filter((e) => e.status === "Active")
     .reduce((t, e) => t + e.salary, 0);
 
   const actionButtons = (emp) => (
     <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+      {emp.status === "Pending" ? (
+        <>
+          <button onClick={() => approve(emp._id)} aria-label="Approve" title="Approve"
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs
+            font-medium text-emerald-700 hover:bg-emerald-100 sm:px-3">
+            <UserCheck size={13} /> <span className="hidden sm:inline">Approve</span>
+          </button>
+          <button onClick={() => reject(emp)} aria-label="Reject" title="Reject"
+            className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs
+            font-medium text-rose-700 hover:bg-rose-100 sm:px-3">
+            <UserX size={13} /> <span className="hidden sm:inline">Reject</span>
+          </button>
+        </>
+      ) : (
+        <>
       <button onClick={() => openEdit(emp)} aria-label="Edit" title="Edit"
         className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs
         font-medium text-blue-700 hover:bg-blue-100 sm:px-3">
@@ -185,6 +223,8 @@ export default function Employees() {
           <UserX size={13} /> <span className="hidden sm:inline">Deactivate</span>
         </button>
       )}
+        </>
+      )}
     </div>
   );
 
@@ -196,6 +236,17 @@ export default function Employees() {
         </button>
       </PageHeader>
 
+      {pending > 0 && (
+        <button onClick={() => setStatus("Pending")}
+          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-amber-200
+          bg-amber-50 px-4 py-3 text-left text-sm text-amber-800 transition hover:bg-amber-100">
+          <span>
+            <strong>{pending}</strong> new {pending === 1 ? "registration is" : "registrations are"} waiting for your approval
+          </span>
+          <span className="shrink-0 font-semibold">Review</span>
+        </button>
+      )}
+
       <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
         <StatCard label="Total Employees" value={employees.length} Icon={Users} tone="blue"
           hint="Click to show everyone"
@@ -205,7 +256,7 @@ export default function Employees() {
           hint={`Monthly payroll ₹${payroll.toLocaleString("en-IN")}`}
           active={status === "Active"}
           onClick={() => setStatus(status === "Active" ? "" : "Active")} />
-        <StatCard label="Inactive" value={employees.length - active} Icon={UserMinus} tone="rose"
+        <StatCard label="Inactive" value={inactive} Icon={UserMinus} tone="rose"
           hint="Click to show deactivated"
           active={status === "Inactive"}
           onClick={() => setStatus(status === "Inactive" ? "" : "Inactive")} />
@@ -236,6 +287,7 @@ export default function Employees() {
           <option value="">All Status</option>
           <option>Active</option>
           <option>Inactive</option>
+          <option>Pending</option>
         </select>
 
         <select value={sort} onChange={(e) => setSort(e.target.value)} className={inputCls}>

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Mail, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Mail, User, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import AuthLayout from "../../components/AuthLayout";
@@ -14,7 +14,6 @@ import {
 
 export default function Register() {
   const { register } = useAuth();
-  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,6 +21,7 @@ export default function Register() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [doneMessage, setDoneMessage] = useState("");
 
   const errors = {
     name: validateName(name),
@@ -38,9 +38,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(name.trim(), email.trim().toLowerCase(), password);
-      toast.success("Account created");
-      navigate("/dashboard");
+      setDoneMessage(await register(name.trim(), email.trim().toLowerCase(), password));
     } catch (error) {
       toast.error(error.response?.data?.message || "Registration failed");
     } finally {
@@ -48,8 +46,20 @@ export default function Register() {
     }
   };
 
+  if (doneMessage) {
+    return (
+      <AuthLayout title="Awaiting approval" subtitle="Your registration was submitted"
+        footer={<Link to="/login" className="font-semibold text-blue-600 hover:underline">Back to sign in</Link>}>
+        <div className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+          <Clock size={20} className="mt-0.5 shrink-0" />
+          <p>{doneMessage} You will be able to sign in as soon as it is approved.</p>
+        </div>
+      </AuthLayout>
+    );
+  }
+
   return (
-    <AuthLayout title="Create your account" subtitle="Register as an employee to get started"
+    <AuthLayout title="Create your account" subtitle="Register as an employee. An administrator approves new accounts."
       footer={<>Already have an account? <Link to="/login" className="font-semibold text-blue-600 hover:underline">Sign in</Link></>}>
       <form onSubmit={submit} noValidate className="space-y-5">
         <FormField label="Full name" value={name} onChange={setName} error={errors.name} forceShow={submitted}
@@ -67,7 +77,7 @@ export default function Register() {
           error={errors.confirm} forceShow={submitted} autoComplete="new-password" placeholder="Re-enter your password" />
 
         <button disabled={loading} className={`${btnPrimary} w-full py-3.5`}>
-          {loading ? "Creating account..." : "Create account"}
+          {loading ? "Submitting..." : "Create account"}
         </button>
       </form>
     </AuthLayout>

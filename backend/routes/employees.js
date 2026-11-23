@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const { z } = require("zod");
 const User = require("../models/User");
+const { sendMail } = require("../utils/mailer");
 const { protect, authorize } = require("../middleware/auth");
 const {
   nameSchema, emailSchema, phoneSchema, passwordSchema, textSchema, amountSchema
@@ -55,7 +56,7 @@ const handleDuplicate = (err, res, next) => {
 // GET /api/employees?search=&status=   (Admin) - returns an array of employees
 router.get("/", authorize("Admin"), async (req, res) => {
   const filter = { role: "Employee" };
-  if (["Active", "Inactive"].includes(req.query.status)) {
+  if (["Active", "Inactive", "Pending"].includes(req.query.status)) {
     filter.status = req.query.status;
   }
   if (typeof req.query.search === "string" && req.query.search.trim()) {
@@ -123,8 +124,8 @@ router.patch("/:id/deactivate", authorize("Admin"), checkId, async (req, res) =>
   if (req.user._id.equals(req.params.id)) {
     return res.status(400).json({ message: "You cannot deactivate your own account" });
   }
-  const employee = await User.findByIdAndUpdate(
-    req.params.id,
+  const employee = await User.findOneAndUpdate(
+    { _id: req.params.id, status: { $ne: "Pending" } },
     { status: "Inactive" },
     { returnDocument: "after" }
   );
@@ -132,10 +133,35 @@ router.patch("/:id/deactivate", authorize("Admin"), checkId, async (req, res) =>
   res.json({ message: "Employee deactivated", employee });
 });
 
+// PATCH /api/employees/:id/approve   (Admin) - lets a self-registered account sign in
+router.patch("/:id/approve", authorize("Admin"), checkId, async (req, res) => {
+  const employee = await User.findOneAndUpdate(
+    { _id: req.params.id, status: "Pending" },
+    { status: "Active" },
+    { returnDocument: "after" }
+  );
+  if (!employee) return res.status(404).json({ message: "No pending registration found" });
+
+  // Best effort: tell the person they can sign in now (does nothing when SMTP is not configured)
+  await sendMail({
+    to: employee.email,
+    subject: "Your HRMS account has been approved",
+    text: `Hi ${employee.name}, your account has been approved. You can now sign in at ${process.env.FRONTEND_URL || "http://localhost:5173"}/login`
+  });
+  res.json({ message: "Registration approved", employee });
+});
+
+// DELETE /api/employees/:id/reject   (Admin) - removes a pending registration
+router.delete("/:id/reject", authorize("Admin"), checkId, async (req, res) => {
+  const employee = await User.findOneAndDelete({ _id: req.params.id, status: "Pending" });
+  if (!employee) return res.status(404).json({ message: "No pending registration found" });
+  res.json({ message: "Registration rejected" });
+});
+
 // PATCH /api/employees/:id/reactivate   (Admin) - lets a deactivated employee log in again
 router.patch("/:id/reactivate", authorize("Admin"), checkId, async (req, res) => {
-  const employee = await User.findByIdAndUpdate(
-    req.params.id,
+  const employee = await User.findOneAndUpdate(
+    { _id: req.params.id, status: "Inactive" },
     { status: "Active" },
     { returnDocument: "after" }
   );

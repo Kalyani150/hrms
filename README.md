@@ -17,7 +17,7 @@ Both are hosted on Vercel and redeploy automatically on every push to `main`
 
 | Area | Admin | Employee |
 |---|---|---|
-| Authentication | Register, login / logout, forgot and reset password, HTTP-only JWT cookie, bcrypt-hashed passwords | Same |
+| Authentication | Register (new accounts need admin approval), login / logout, forgot and reset password, HTTP-only JWT cookie, bcrypt-hashed passwords | Same |
 | Dashboard | Totals, present today, pending/approved leaves, departments, payroll overview, recent employees, attendance trend | Profile card, today's check-in status, recent attendance, leave requests, latest payslip |
 | Employees | Add, edit, deactivate / reactivate, search, filter by department and status, sort | View and edit own profile (name, phone, address), change password |
 | Attendance | See everyone's records, filter by date | Check in / check out (Present or Late), own history |
@@ -83,7 +83,8 @@ All routes are under `/api`. Everything except `register`, `login`, `forgot-pass
 | Route | Access | Purpose |
 |---|---|---|
 | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | public / user | Session |
-| `POST /auth/register`, `POST /auth/forgot-password`, `POST /auth/reset-password` | public | Sign up as Employee; emailed 15-minute reset link |
+| `POST /auth/register`, `POST /auth/forgot-password`, `POST /auth/reset-password` | public | Sign up (account stays Pending until an admin approves it); emailed 15-minute reset link |
+| `PATCH /employees/:id/approve`, `DELETE /employees/:id/reject` | admin | Approve or reject a pending registration |
 | `PUT /auth/profile`, `PUT /auth/change-password` | user | Own profile and password |
 | `GET /employees`, `POST /employees`, `PUT /employees/:id` | admin | List, create, update |
 | `PATCH /employees/:id/deactivate`, `PATCH /employees/:id/reactivate` | admin | Account status |
