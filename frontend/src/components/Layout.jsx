@@ -34,9 +34,10 @@ export default function Layout() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
+      const loginPath = user.role === "Admin" ? "/admin/login" : "/login";
       await logout();
       setConfirmLogout(false);
-      navigate("/login");
+      navigate(loginPath);
     } catch {
       toast.error("Logout failed");
     } finally {
@@ -121,7 +122,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+        <main className="mx-auto max-w-7xl p-3 min-[360px]:p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

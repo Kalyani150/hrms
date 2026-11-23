@@ -27,8 +27,6 @@ const updateSchema = z.object({
   updateSalary: z.boolean() // also save `basic` as the employee's monthly salary
 }).partial();
 
-const generateSchema = z.object({ month });
-
 const DEDUCTION_ERROR = "Deductions cannot be more than basic pay plus bonus";
 
 const net = (basic, bonus, deductions) => Math.max(0, basic + bonus - deductions);
@@ -86,35 +84,6 @@ router.post("/", authorize("Admin"), async (req, res, next) => {
   }
 });
 
-// POST /api/payroll/generate   (Admin: payslips for all active employees for a month)
-router.post("/generate", authorize("Admin"), async (req, res) => {
-  const parsed = generateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ message: parsed.error.issues[0].message });
-  }
-
-  const employees = await User.find({ status: "Active", role: "Employee" });
-  const existing = await Payroll.find({ month: parsed.data.month }).distinct("employee");
-  const done = new Set(existing.map(String));
-
-  const docs = employees
-    .filter((e) => !done.has(String(e._id)))
-    .map((e) => ({
-      employee: e._id,
-      month: parsed.data.month,
-      basic: e.salary,
-      bonus: 0,
-      deductions: 0,
-      netSalary: e.salary
-    }));
-
-  if (docs.length) await Payroll.insertMany(docs);
-  res.status(201).json({
-    message: `Generated ${docs.length} payslip(s), skipped ${employees.length - docs.length} existing`,
-    created: docs.length
-  });
-});
-
 // PUT /api/payroll/:id   (Admin: edit amounts of an unpaid payslip)
 router.put("/:id", authorize("Admin"), checkId, async (req, res) => {
   const parsed = updateSchema.safeParse(req.body);
@@ -155,6 +124,13 @@ router.patch("/:id/pay", authorize("Admin"), checkId, async (req, res) => {
   payroll.paidAt = new Date();
   await payroll.save();
   res.json({ payroll });
+});
+
+// DELETE /api/payroll/:id   (Admin: remove a payslip)
+router.delete("/:id", authorize("Admin"), checkId, async (req, res) => {
+  const payroll = await Payroll.findByIdAndDelete(req.params.id);
+  if (!payroll) return res.status(404).json({ message: "Payroll record not found" });
+  res.json({ message: "Payroll record deleted" });
 });
 
 module.exports = router;

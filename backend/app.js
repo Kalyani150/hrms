@@ -10,7 +10,7 @@ const { connectDb } = require("./db");
 
 const app = express();
 
-// Behind a reverse proxy (Vercel, Render ...) the visitor's real IP arrives in X-Forwarded-For.
+// Behind a reverse proxy (Render, Vercel ...) the visitor's real IP arrives in X-Forwarded-For.
 // Without this the login rate limiter would treat every visitor as the same address.
 app.set("trust proxy", Number(process.env.TRUST_PROXY) || 0);
 
@@ -55,7 +55,6 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Plain require() calls (not a variable) so Vercel's bundler includes every route file
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/employees", require("./routes/employees"));
 app.use("/api/attendance", require("./routes/attendance"));

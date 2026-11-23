@@ -21,7 +21,7 @@ export const greeting = () => {
 export function Hero({ children }) {
   return (
     <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-600
-      via-indigo-600 to-violet-700 p-6 text-white shadow-xl shadow-indigo-200 md:p-8">
+      via-indigo-600 to-violet-700 p-5 text-white shadow-xl shadow-indigo-200 sm:p-6 md:p-8">
       <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
       <div className="absolute -bottom-24 right-40 h-56 w-56 rounded-full bg-white/10" />
       <div className="relative">{children}</div>
@@ -31,7 +31,7 @@ export function Hero({ children }) {
 
 export function HeroAction({ to, Icon, label }) {
   return (
-    <Link to={to} className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5
+    <Link to={to} className="flex grow items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 sm:grow-0
       text-sm font-medium backdrop-blur transition hover:bg-white/25">
       <Icon size={17} /> {label}
     </Link>
@@ -40,13 +40,13 @@ export function HeroAction({ to, Icon, label }) {
 
 export function CardTitle({ children, sub, to, linkText = "See all" }) {
   return (
-    <div className="flex items-start justify-between">
-      <div>
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
         <h2 className="font-bold text-slate-800">{children}</h2>
         {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
       </div>
       {to && (
-        <Link to={to} className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline">
+        <Link to={to} className="flex shrink-0 items-center gap-1 text-sm font-medium text-blue-600 hover:underline">
           {linkText} <ArrowRight size={14} />
         </Link>
       )}
@@ -74,13 +74,13 @@ export const miniTones = {
 export function MiniStat({ label, value, hint, Icon, tone, to }) {
   return (
     <Link to={to} className="block rounded-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
-      <Card className="flex items-center gap-4 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-        <span className={`rounded-xl p-3 ${miniTones[tone]}`}><Icon size={20} /></span>
+      <Card className="flex items-center gap-3 p-3 transition sm:gap-4 sm:p-4 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+        <span className={`shrink-0 rounded-xl p-2.5 sm:p-3 ${miniTones[tone]}`}><Icon size={20} /></span>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-slate-500">{label}</p>
           <p className="text-2xl font-bold leading-tight text-slate-800">{value}</p>
         </div>
-        <p className="hidden text-right text-xs text-slate-400 sm:block">{hint}</p>
+        <p className="hidden text-right text-xs text-slate-400 sm:block md:hidden xl:block">{hint}</p>
       </Card>
     </Link>
   );
@@ -95,13 +95,13 @@ export function AttendanceChart({ data }) {
         <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm bg-blue-600" /> On time</span>
         <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> Late</span>
       </div>
-      <div className="flex h-44 items-end gap-3 border-b border-slate-100">
+      <div className="flex h-44 items-end gap-1.5 sm:gap-3 border-b border-slate-100">
         {data.map((d) => {
           const total = d.present + d.late;
           return (
             <div key={d.date} className="group relative flex h-full flex-1 flex-col justify-end">
               <Tip>{weekday(d.date)} {short(d.date)}: {d.present} on time, {d.late} late</Tip>
-              <p className="mb-1 text-center text-xs font-semibold text-slate-600">{total || ""}</p>
+              <p className="mb-1 text-center text-[11px] font-semibold text-slate-600 sm:text-xs">{total || ""}</p>
               <div className="mx-auto flex w-full max-w-10 flex-col justify-end gap-0.5 transition
                 group-hover:opacity-80" style={{ height: `${(total / max) * 82}%` }}>
                 {d.late > 0 && (
@@ -117,9 +117,9 @@ export function AttendanceChart({ data }) {
           );
         })}
       </div>
-      <div className="mt-2 flex gap-3">
+      <div className="mt-2 flex gap-1.5 sm:gap-3">
         {data.map((d) => (
-          <p key={d.date} className="flex-1 text-center text-xs text-slate-500">{weekday(d.date)}</p>
+          <p key={d.date} className="min-w-0 flex-1 text-center text-[11px] text-slate-500 sm:text-xs">{weekday(d.date)}</p>
         ))}
       </div>
     </div>
@@ -160,11 +160,11 @@ export function HoursChart({ records }) {
   }
   return (
     <div>
-      <div className="flex h-40 items-end gap-3 border-b border-slate-100">
+      <div className="flex h-40 items-end gap-1.5 sm:gap-3 border-b border-slate-100">
         {rows.map((r) => (
           <div key={r.date} className="group relative flex h-full flex-1 flex-col justify-end">
             <Tip>{weekday(r.date)} {short(r.date)}: {r.hours == null ? "no check-out" : `${r.hours.toFixed(1)} h`}</Tip>
-            <p className="mb-1 text-center text-xs font-semibold text-slate-600">
+            <p className="mb-1 text-center text-[11px] font-semibold text-slate-600 sm:text-xs">
               {r.hours == null ? "–" : r.hours.toFixed(1)}
             </p>
             <div className={`mx-auto w-full max-w-10 rounded-t-md transition group-hover:opacity-80 ${
@@ -173,9 +173,9 @@ export function HoursChart({ records }) {
           </div>
         ))}
       </div>
-      <div className="mt-2 flex gap-3">
+      <div className="mt-2 flex gap-1.5 sm:gap-3">
         {rows.map((r) => (
-          <p key={r.date} className="flex-1 text-center text-xs text-slate-500">{weekday(r.date)}</p>
+          <p key={r.date} className="min-w-0 flex-1 text-center text-[11px] text-slate-500 sm:text-xs">{weekday(r.date)}</p>
         ))}
       </div>
     </div>

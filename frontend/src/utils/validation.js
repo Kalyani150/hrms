@@ -4,14 +4,14 @@
 export const NAME_REGEX = /^[A-Za-z]+( [A-Za-z]+)*$/;
 export const EMAIL_REGEX = /^[a-zA-Z0-9]+([._-]?[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$/;
 export const PHONE_REGEX = /^\d{10}$/;
-export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};:,.?])[A-Za-z0-9!@#$%^&*()_+\-=[\]{};:,.?]{8,128}$/;
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%&*_\-])[A-Za-z0-9!@#$%&*_-]{8,128}$/;
 
 export const MESSAGES = {
   name: "Name should contain only letters",
   nameLength: "Name must be 2 to 50 characters",
   email: "Enter a valid email (e.g. name@gmail.com)",
   phone: "Phone number must be 10 digits",
-  password: "Password must be 8-128 characters with uppercase, lowercase, number and one of these symbols: ! @ # $ % ^ & * ( ) _ + - = [ ] { } ; : , . ?"
+  password: "Password must be 8-128 characters with uppercase, lowercase, number and one of these symbols: ! @ # $ % & * _ -"
 };
 
 /* ---------- keystroke filters (also used to clean pasted text) ---------- */
@@ -24,9 +24,9 @@ export const ALLOW_TEXT_KEY = /[A-Za-z /&.-]/;
 export const ALLOW_EMAIL_KEY = /[A-Za-z0-9@._-]/;
 
 // Passwords may only contain letters, numbers and these symbols
-export const PASSWORD_SYMBOLS = "! @ # $ % ^ & * ( ) _ + - = [ ] { } ; : , . ?";
-export const ALLOW_PASSWORD_KEY = /[A-Za-z0-9!@#$%^&*()_+\-=[\]{};:,.?]/;
-export const sanitizePassword = (v) => v.replace(/[^A-Za-z0-9!@#$%^&*()_+\-=[\]{};:,.?]/g, "").slice(0, 128);
+export const PASSWORD_SYMBOLS = "! @ # $ % & * _ -";
+export const ALLOW_PASSWORD_KEY = /[A-Za-z0-9!@#$%&*_\-]/;
+export const sanitizePassword = (v) => v.replace(/[^A-Za-z0-9!@#$%&*_\-]/g, "").slice(0, 128);
 
 export const EMAIL_RULES_HINT =
   "Letters, numbers and . _ - before the @, then a domain like gmail.com or company.co.in. No spaces.";
@@ -123,10 +123,18 @@ export function validateDate(value = "", label = "Date") {
 export const validateAddress = (value = "") =>
   value.trim().length <= 300 ? "" : "Address must be at most 300 characters";
 
+// Leave reason: letters, numbers, spaces and . , ! ? ' - / & ( ) :  (no other keys)
+export const REASON_REGEX = /^[A-Za-z0-9 .,!?'\-/&():]+$/;
+export const ALLOW_REASON_KEY = /[A-Za-z0-9 .,!?'\-/&():]/;
+export const sanitizeReason = (v) =>
+  v.replace(/[^A-Za-z0-9 .,!?'\-/&():]/g, "").replace(/^ +/, "").replace(/ {2,}/g, " ").slice(0, 500);
+
 export function validateReason(value = "") {
-  const len = value.trim().length;
-  if (len < 10) return "Reason must be at least 10 characters";
-  return len > 500 ? "Reason must be at most 500 characters" : "";
+  const t = value.trim();
+  if (t.length < 10) return "Reason must be at least 10 characters";
+  if (t.length > 500) return "Reason must be at most 500 characters";
+  if (!REASON_REGEX.test(t)) return "Reason can only contain letters, numbers, spaces and . , ! ? ' - / & ( ) :";
+  return /[A-Za-z]/.test(t) ? "" : "Reason must contain some letters";
 }
 
 export function validateEndDate(start, end) {

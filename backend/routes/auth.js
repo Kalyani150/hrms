@@ -1,18 +1,41 @@
 const express = require("express");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 const { z } = require("zod");
 const User = require("../models/User");
 const { protect } = require("../middleware/auth");
 const { nameSchema, emailSchema, phoneSchema, passwordSchema } = require("../utils/validation");
-const { sendMail } = require("../utils/mailer");
 
 const router = express.Router();
+
+// Sends an email through the SMTP server configured in .env (SMTP_HOST, SMTP_PORT, SMTP_USER,
+// SMTP_PASS, MAIL_FROM). Returns false when SMTP is not configured or sending fails.
+async function sendMail({ to, subject, text }) {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
+  if (!SMTP_HOST) return false;
+
+  try {
+    const transport = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: Number(SMTP_PORT) || 587,
+      secure: Number(SMTP_PORT) === 465,
+      auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined
+    });
+    await transport.sendMail({ from: MAIL_FROM || SMTP_USER, to, subject, text });
+    return true;
+  } catch (err) {
+    console.error("Email could not be sent:", err.message);
+    return false;
+  }
+}
 
 const loginSchema = z.object({
   email: emailSchema,
   // sign-in only needs a value; complexity rules apply when a password is created/changed
-  password: z.string().min(1, "Password is required")
+  password: z.string().min(1, "Password is required"),
+  // which sign-in page was used: admins and employees have separate logins
+  portal: z.enum(["admin", "employee"]).default("employee")
 });
 
 // Public sign-up always creates an Employee; admins are created by the seed script
@@ -81,9 +104,9 @@ router.post("/register", async (req, res) => {
     return res.status(409).json({ message: "An account with this email already exists" });
   }
 
-  const user = await User.create({ ...parsed.data, role: "Employee" });
-  res.cookie("token", signToken(user), cookieOptions);
-  res.status(201).json({ user: publicUser(user) });
+  await User.create({ ...parsed.data, role: "Employee" });
+  // Not signed in automatically: the new user goes to the sign-in page
+  res.status(201).json({ message: "Account created. Please sign in." });
 });
 
 // POST /api/auth/forgot-password
@@ -147,7 +170,7 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ message: parsed.error.issues[0].message });
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, portal } = parsed.data;
   const user = await User.findOne({ email }).select("+password");
 
   // Same message for unknown email and wrong password
@@ -156,6 +179,15 @@ router.post("/login", async (req, res) => {
   }
   if (user.status !== "Active") {
     return res.status(403).json({ message: "Your account is inactive" });
+  }
+
+  // Checked after the password so the message cannot be used to discover which emails are admins
+  const isAdmin = user.role === "Admin";
+  if (portal === "admin" && !isAdmin) {
+    return res.status(403).json({ message: "This is not an admin account. Use the employee sign-in." });
+  }
+  if (portal === "employee" && isAdmin) {
+    return res.status(403).json({ message: "Admins must sign in from the admin sign-in page." });
   }
 
   res.cookie("token", signToken(user), cookieOptions);

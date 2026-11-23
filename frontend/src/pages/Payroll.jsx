@@ -1,20 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Plus, BadgeCheck, Wallet, Clock, CircleCheck, PieChart, LayoutGrid, List, Users, Pencil,
-  Printer
+  Plus, BadgeCheck, Wallet, Clock, CircleCheck, PieChart, LayoutGrid, List, Pencil,
+  Printer, Trash2
 } from "lucide-react";
 import PayslipPrint from "../components/PayslipPrint";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard,
+  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard, Pagination,
   inputCls, btnPrimary, btnGhost, th, td
 } from "../components/ui";
 import FormField from "../components/FormField";
 import {
   validateAmount, validateDeductions, validateSelect, validateMonth, isValid
 } from "../utils/validation";
+
+const PAGE_SIZE = 4; // payslips per page
 
 const money = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
@@ -34,16 +36,16 @@ export default function Payroll() {
   const [month, setMonth] = useState("");
   const [status, setStatus] = useState("");
   const [view, setView] = useState("cards");
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // "single" | "all" | "edit" | null
+  const [modal, setModal] = useState(null); // "single" | "edit" | null
+  const [deleting, setDeleting] = useState(null); // payslip waiting for delete confirmation
   const [editing, setEditing] = useState(null); // payslip being edited
   const [editForm, setEditForm] = useState({ basic: "", bonus: "", deductions: "", updateSalary: false });
-  const [bulkMonth, setBulkMonth] = useState(currentMonth());
   const [months, setMonths] = useState([]);
   const [form, setForm] = useState({
     employee: "", month: currentMonth(), bonus: "0", deductions: "0"
   });
-  const listRef = useRef(null);
   const [printSlip, setPrintSlip] = useState(null); // payslip being printed
 
   // Print the chosen payslip: show only it on paper, then restore the page
@@ -116,8 +118,6 @@ export default function Payroll() {
   };
   const editValid = isValid(editErrors);
 
-  const bulkError = validateMonth(bulkMonth);
-
   const generate = async (e) => {
     e.preventDefault();
     if (!singleValid) return;
@@ -142,18 +142,15 @@ export default function Payroll() {
     }
   };
 
-  const generateAll = async (e) => {
-    e.preventDefault();
-    if (bulkError) return;
+  const confirmDelete = async () => {
     try {
-      const { data } = await api.post("/payroll/generate", { month: bulkMonth });
-      toast.success(data.message);
-      setModal(null);
-      setMonth(bulkMonth);
+      await api.delete(`/payroll/${deleting._id}`);
+      toast.success("Payroll record deleted");
+      setDeleting(null);
       load();
       loadMonths();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Generation failed");
+      toast.error(error.response?.data?.message || "Delete failed");
     }
   };
 
@@ -209,12 +206,11 @@ export default function Payroll() {
   const sum = (list) => list.reduce((t, r) => t + (r.netSalary || 0), 0);
   const paid = records.filter((r) => r.status === "Paid");
   const pending = records.filter((r) => r.status === "Pending");
+  // Only one page of payslips is drawn at a time
+  const lastPage = Math.max(1, Math.ceil(records.length / PAGE_SIZE));
+  const currentPage = Math.min(page, lastPage);
+  const visible = records.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const completion = records.length ? Math.round((paid.length / records.length) * 100) : 0;
-
-  const pick = (s) => {
-    setStatus(s);
-    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const printBtn = (r) => (
     <button onClick={() => setPrintSlip(r)}
@@ -223,6 +219,15 @@ export default function Payroll() {
       <Printer size={14} /> Print
     </button>
   );
+
+  const deleteBtn = (r) =>
+    isAdmin && (
+      <button onClick={() => setDeleting(r)}
+        className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-xs
+        font-medium text-rose-700 hover:bg-rose-100">
+        <Trash2 size={14} /> Delete
+      </button>
+    );
 
   // Admin actions for an unpaid payslip: Edit amounts, Mark Paid
   const payAction = (r) =>
@@ -247,9 +252,6 @@ export default function Payroll() {
         subtitle={isAdmin ? "Generate and manage monthly payslips" : "Your monthly payslips"}>
         {isAdmin && (
           <>
-            <button onClick={() => setModal("all")} className={btnGhost}>
-              <Users size={17} /> Generate for all
-            </button>
             <button onClick={() => setModal("single")} className={btnPrimary}>
               <Plus size={18} /> Generate Payroll
             </button>
@@ -259,14 +261,11 @@ export default function Payroll() {
 
       <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
         <StatCard label="Total net payroll" value={money(sum(records))} Icon={Wallet} tone="blue"
-          hint={`${records.length} payslip${records.length === 1 ? "" : "s"} · click for all`}
-          active={!status} onClick={() => pick("")} />
+          hint={`${records.length} payslip${records.length === 1 ? "" : "s"}`} />
         <StatCard label="Paid" value={money(sum(paid))} Icon={CircleCheck} tone="green"
-          hint={`${paid.length} paid`} active={status === "Paid"}
-          onClick={() => pick(status === "Paid" ? "" : "Paid")} />
+          hint={`${paid.length} paid`} />
         <StatCard label="Pending" value={money(sum(pending))} Icon={Clock} tone="amber"
-          hint={`${pending.length} awaiting payment`} active={status === "Pending"}
-          onClick={() => pick(status === "Pending" ? "" : "Pending")} />
+          hint={`${pending.length} awaiting payment`} />
         <StatCard label="Completion" value={`${completion}%`} Icon={PieChart} tone="violet"
           hint={`${paid.length} of ${records.length} paid`} />
       </div>
@@ -284,28 +283,29 @@ export default function Payroll() {
         </div>
       </Card>
 
-      <Card className="scroll-mt-24 flex flex-wrap items-center justify-between gap-3 p-4 sm:flex-nowrap" ref={listRef}>
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 sm:flex-nowrap">
-          <select value={month} onChange={(e) => setMonth(e.target.value)}
-            className={`${inputCls} w-44! shrink-0`}>
+      <Card className="grid grid-cols-2 items-center gap-3 p-4 sm:flex sm:justify-between">
+        {/* phones: month + status share a row, Clear and the view toggle share the next one */}
+        <div className="contents sm:flex sm:min-w-0 sm:flex-1 sm:items-center sm:gap-3">
+          <select value={month} onChange={(e) => { setMonth(e.target.value); setPage(1); }}
+            className={`${inputCls} min-w-0 sm:w-44! sm:shrink-0`}>
             <option value="">All months</option>
             {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
           </select>
-          <select value={status} onChange={(e) => setStatus(e.target.value)}
-            className={`${inputCls} w-40! shrink-0`}>
+          <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            className={`${inputCls} min-w-0 sm:w-40! sm:shrink-0`}>
             <option value="">All Status</option>
             <option>Pending</option>
             <option>Paid</option>
           </select>
           {(month || status) && (
-            <button onClick={() => { setMonth(""); setStatus(""); }}
-              className="shrink-0 text-sm font-medium text-blue-600 hover:underline">Clear</button>
+            <button onClick={() => { setMonth(""); setStatus(""); setPage(1); }}
+              className="justify-self-start text-sm font-medium text-blue-600 hover:underline sm:shrink-0">Clear</button>
           )}
         </div>
-        <div className="flex rounded-xl bg-slate-100 p-1">
+        <div className="col-start-2 flex w-fit justify-self-end rounded-xl bg-slate-100 p-0.5 sm:col-start-auto sm:p-1">
           {[["cards", LayoutGrid], ["table", List]].map(([key, Icon]) => (
             <button key={key} onClick={() => setView(key)} title={`${key} view`}
-              className={`rounded-lg px-3 py-2 transition ${
+              className={`rounded-lg px-2.5 py-1.5 transition sm:px-3 sm:py-2 ${
                 view === key ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"
               }`}>
               <Icon size={18} />
@@ -321,7 +321,7 @@ export default function Payroll() {
           </div>
         ) : records.length ? (
           <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-            {records.map((r) => (
+            {visible.map((r) => (
               <Card key={r._id} className="overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
                 <div className={`p-5 text-white ${
                   r.status === "Paid"
@@ -359,6 +359,7 @@ export default function Payroll() {
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     {payAction(r)}
                     {printBtn(r)}
+                    {deleteBtn(r)}
                   </div>
                   {r.status === "Paid" && r.paidAt && (
                     <p className="mt-3 text-xs text-slate-400">
@@ -375,32 +376,33 @@ export default function Payroll() {
       ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left">
+            <table className="w-full min-w-[820px] sm:min-w-[900px] text-left">
               <thead className="bg-slate-50">
                 <tr>
                   {["Employee", "Month", "Basic", "Bonus", "Deductions", "Net Salary", "Status", "Action"]
-                    .map((h) => <th key={h} className={th}>{h}</th>)}
+                    .map((h) => <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {loading ? <SkeletonRows cols={8} /> : records.map((r) => (
+                {loading ? <SkeletonRows cols={8} /> : visible.map((r) => (
                   <tr key={r._id} className="transition hover:bg-slate-50/70">
-                    <td className={td}>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                       <div className="flex items-center gap-3">
-                        <Avatar name={r.employee?.name} size="h-9 w-9 text-xs" />
+                        <Avatar name={r.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
                         <span className="font-medium text-slate-800">{r.employee?.name}</span>
                       </div>
                     </td>
-                    <td className={td}>{monthLabel(r.month)}</td>
-                    <td className={td}>{money(r.basic)}</td>
-                    <td className={`${td} text-emerald-600`}>{r.bonus ? `+ ${money(r.bonus)}` : money(0)}</td>
-                    <td className={`${td} text-rose-600`}>{r.deductions ? `− ${money(r.deductions)}` : money(0)}</td>
-                    <td className={`${td} font-bold text-slate-800`}>{money(r.netSalary)}</td>
-                    <td className={td}><Badge value={r.status} /></td>
-                    <td className={td}>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{monthLabel(r.month)}</td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{money(r.basic)}</td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! text-emerald-600 sm:px-5! sm:py-4!`}>{r.bonus ? `+ ${money(r.bonus)}` : money(0)}</td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! text-rose-600 sm:px-5! sm:py-4!`}>{r.deductions ? `− ${money(r.deductions)}` : money(0)}</td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! font-bold text-slate-800 sm:px-5! sm:py-4!`}>{money(r.netSalary)}</td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={r.status} /></td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                       <div className="flex gap-2">
                         {payAction(r)}
                         {printBtn(r)}
+                        {deleteBtn(r)}
                       </div>
                     </td>
                   </tr>
@@ -410,6 +412,11 @@ export default function Payroll() {
             </table>
           </div>
         </Card>
+      )}
+
+      {!loading && (
+        <Pagination page={currentPage} pageSize={PAGE_SIZE} total={records.length}
+          onChange={(n) => { setPage(n); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
       )}
 
       {modal === "single" && (
@@ -492,20 +499,23 @@ export default function Payroll() {
         </Modal>
       )}
 
-      {modal === "all" && (
-        <Modal title="Generate payroll for all employees" onClose={() => setModal(null)}>
-          <form onSubmit={generateAll} noValidate className="space-y-4">
-            <p className="text-sm text-slate-500">
-              Creates a payslip for every active employee who doesn't have one yet for the
-              chosen month, using their salary as basic pay. Existing payslips are skipped.
+      {deleting && (
+        <Modal title="Delete payslip?" onClose={() => setDeleting(null)}>
+          <div className="flex items-start gap-4">
+            <span className="rounded-xl bg-rose-50 p-3 text-rose-600"><Trash2 size={22} /></span>
+            <p className="text-sm text-slate-600">
+              Delete the {monthLabel(deleting.month)} payslip of <b>{deleting.employee?.name}</b>
+              {deleting.status === "Paid" ? " (already paid)" : ""}? This cannot be undone.
             </p>
-            <FormField label="Month" type="month" value={bulkMonth} error={bulkError}
-              onChange={setBulkMonth} />
-            <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => setModal(null)} className={btnGhost}>Cancel</button>
-              <button disabled={!!bulkError} className={btnPrimary}>Generate for all</button>
-            </div>
-          </form>
+          </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button type="button" onClick={() => setDeleting(null)} className={btnGhost}>Cancel</button>
+            <button type="button" onClick={confirmDelete}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5
+              text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700">
+              <Trash2 size={16} /> Delete
+            </button>
+          </div>
         </Modal>
       )}
     </div>

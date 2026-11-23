@@ -102,33 +102,34 @@ export default function Profile() {
       <PageHeader title="My Profile" subtitle="Your personal information and security" />
 
       {/* Banner */}
-      <div className="flex flex-wrap items-center gap-5 rounded-2xl bg-linear-to-br
-        from-blue-600 via-indigo-600 to-violet-600 p-6 text-white shadow-lg md:p-8">
-        <span className="flex h-20 w-20 items-center justify-center rounded-full
-          bg-white/20 text-2xl font-bold ring-4 ring-white/30">
+      <div className="flex flex-col items-center gap-4 rounded-2xl bg-linear-to-br
+        from-blue-600 via-indigo-600 to-violet-600 p-5 text-center text-white shadow-lg
+        sm:flex-row sm:flex-wrap sm:gap-5 sm:p-6 sm:text-left md:p-8">
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full
+          bg-white/20 text-xl font-bold ring-4 ring-white/30 sm:h-20 sm:w-20 sm:text-2xl">
           {user.name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("")}
         </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-2xl font-bold">{user.name}</h2>
+        <div className="w-full min-w-0 sm:w-auto sm:flex-1">
+          <h2 className="text-xl font-bold [overflow-wrap:anywhere] sm:truncate sm:text-2xl">{user.name}</h2>
           <p className="text-blue-100">
             {[user.designation, user.department].filter(Boolean).join(" · ") || user.role}
           </p>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
             <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium">{user.role}</span>
             <Badge value={user.status || "Active"} />
           </div>
         </div>
         {!editing && (
           <button onClick={startEdit}
-            className="flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm
-            font-semibold text-indigo-700 shadow transition hover:bg-blue-50">
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm
+            font-semibold text-indigo-700 shadow transition hover:bg-blue-50 sm:w-auto">
             <Pencil size={16} /> Edit profile
           </button>
         )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <h2 className="mb-5 font-bold text-slate-800">
             {editing ? "Edit personal details" : "Personal details"}
           </h2>
@@ -151,7 +152,7 @@ export default function Profile() {
               <p className="text-xs text-slate-500">
                 Email, department, designation and role are managed by HR.
               </p>
-              <div className="flex justify-end gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-end">
                 <button type="button" onClick={() => setEditing(false)}
                   className={btnGhost}>Cancel</button>
                 <button disabled={saving || !profileValid} className={btnPrimary}>
@@ -162,13 +163,13 @@ export default function Profile() {
           ) : (
             <dl className="space-y-5">
               {details.map(([Icon, label, value]) => (
-                <div key={label} className="flex items-start gap-4">
-                  <span className="rounded-xl bg-slate-100 p-2.5 text-slate-500">
+                <div key={label} className="flex items-start gap-3 sm:gap-4">
+                  <span className="shrink-0 rounded-xl bg-slate-100 p-2.5 text-slate-500">
                     <Icon size={18} />
                   </span>
                   <div className="min-w-0">
                     <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</dt>
-                    <dd className="mt-0.5 break-words font-medium text-slate-800">{value}</dd>
+                    <dd className="mt-0.5 font-medium text-slate-800 [overflow-wrap:anywhere]">{value}</dd>
                   </div>
                 </div>
               ))}
@@ -176,7 +177,7 @@ export default function Profile() {
           )}
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <h2 className="mb-5 font-bold text-slate-800">Change password</h2>
           <form onSubmit={savePassword} noValidate className="space-y-4">
             <PasswordField label="Current password" autoComplete="current-password"
@@ -188,8 +189,8 @@ export default function Profile() {
             <PasswordField label="Confirm new password" autoComplete="new-password"
               value={pw.confirm} error={pwErrors.confirm}
               onChange={(v) => setPw({ ...pw, confirm: v })} />
-            <div className="flex justify-end">
-              <button disabled={changingPw || !pwValid} className={btnPrimary}>
+            <div className="flex sm:justify-end">
+              <button disabled={changingPw || !pwValid} className={`${btnPrimary} w-full sm:w-auto`}>
                 {changingPw ? "Updating..." : "Update password"}
               </button>
             </div>

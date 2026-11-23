@@ -8,10 +8,10 @@ leave requests and monthly payroll, with two roles: **Admin** and **Employee**.
 | | Address |
 |---|---|
 | **Website (frontend)** | https://frontend-tan-beta-88.vercel.app |
-| **API (backend)** | https://hrms-backend-omega-pied.vercel.app (health check: `/api/health`) |
+| **API (backend)** | Render web service, `https://<your-service>.onrender.com` (health check: `/api/health`) |
 
-Both are hosted on Vercel and redeploy automatically on every push to `main`
-(see `DEPLOYMENT.md`).
+The frontend is hosted on Vercel and the backend on Render. Both redeploy automatically on every
+push to `main` (see `DEPLOYMENT.md`).
 
 ## Features
 
@@ -50,8 +50,7 @@ cd backend
 npm install
 cp .env.example .env        # then edit .env (MONGO_URI, JWT_SECRET, ADMIN_* ...)
 npm run db                  # optional: starts a local MongoDB on port 27017 (keep it running)
-npm run seed                # creates the first admin from ADMIN_EMAIL / ADMIN_PASSWORD
-npm run dev                 # API on http://localhost:5000
+npm run dev                 # API on http://localhost:5000 (creates the first admin from ADMIN_* on an empty database)
 
 # 2. Frontend (new terminal)
 cd frontend
@@ -68,7 +67,6 @@ Sign in with the admin you seeded, then add employees from **Employees -> Add Em
 |---|---|
 | `npm run dev` | Start the API with auto-restart (nodemon) |
 | `npm start` | Start the API (production) |
-| `npm run seed` | Create the first admin if it does not exist yet |
 | `npm run db` | Start a local development MongoDB (data kept in `backend/.data`) |
 
 ### Environment variables (`backend/.env`)
@@ -92,7 +90,7 @@ All routes are under `/api`. Everything except `register`, `login`, `forgot-pass
 | `POST /leaves`, `GET /leaves?status=` | user (own) / admin (all) | Apply, list |
 | `PATCH /leaves/:id/status` | admin | Approve or reject |
 | `GET /payroll?month=&status=` | user (own) / admin (all) | Payslips |
-| `POST /payroll`, `POST /payroll/generate`, `PUT /payroll/:id`, `PATCH /payroll/:id/pay` | admin | Create, edit, pay |
+| `POST /payroll`, `PUT /payroll/:id`, `PATCH /payroll/:id/pay`, `DELETE /payroll/:id` | admin | Create, edit, pay, delete |
 | `GET /dashboard` | user | Role-specific dashboard data |
 | `GET /health` | public | Health check |
 

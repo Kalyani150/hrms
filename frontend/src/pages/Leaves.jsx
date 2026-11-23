@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Check, X, Hourglass, CircleCheck, CircleX, CalendarRange } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonList, Field, Modal, StatCard,
+  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, Field, Modal, StatCard,
   inputCls, btnPrimary, btnGhost, th, td
 } from "../components/ui";
 import FormField from "../components/FormField";
-import { validateDate, validateEndDate, validateReason, isValid } from "../utils/validation";
+import {
+  validateDate, validateEndDate, validateReason, sanitizeReason, ALLOW_REASON_KEY, isValid
+} from "../utils/validation";
 
 const blank = { type: "Sick Leave", startDate: "", endDate: "", reason: "" };
 const tabs = ["All", "Pending", "Approved", "Rejected"];
@@ -33,13 +35,6 @@ export default function Leaves() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(blank);
   const [loading, setLoading] = useState(true);
-  const tableRef = useRef(null);
-
-  // Show a status tab and bring the table into view
-  const showTab = (name) => {
-    setFilter(name);
-    tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const load = async () => {
     try {
@@ -109,20 +104,16 @@ export default function Leaves() {
 
       <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
         <StatCard label="Pending" value={count("Pending")} Icon={Hourglass} tone="amber"
-          hint={user.role === "Admin" ? "Waiting for your review" : "Waiting for approval"}
-          active={filter === "Pending"} onClick={() => showTab(filter === "Pending" ? "All" : "Pending")} />
+          hint={user.role === "Admin" ? "Waiting for your review" : "Waiting for approval"} />
         <StatCard label="Approved" value={count("Approved")} Icon={CircleCheck} tone="green"
-          hint={`${approvedDays} day${approvedDays === 1 ? "" : "s"} in total`}
-          active={filter === "Approved"} onClick={() => showTab(filter === "Approved" ? "All" : "Approved")} />
+          hint={`${approvedDays} day${approvedDays === 1 ? "" : "s"} in total`} />
         <StatCard label="Rejected" value={count("Rejected")} Icon={CircleX} tone="rose"
-          hint="Declined requests"
-          active={filter === "Rejected"} onClick={() => showTab(filter === "Rejected" ? "All" : "Rejected")} />
+          hint="Declined requests" />
         <StatCard label="All Requests" value={leaves.length} Icon={CalendarRange} tone="blue"
-          hint="Click to show all"
-          active={filter === "All"} onClick={() => showTab("All")} />
+          hint="Every request so far" />
       </div>
 
-      <Card className="scroll-mt-24 overflow-hidden" ref={tableRef}>
+      <Card className="overflow-hidden">
         <div className="flex flex-wrap gap-2 border-b border-slate-100 p-4">
           {tabs.map((t) => (
             <button key={t} onClick={() => setFilter(t)}
@@ -136,68 +127,22 @@ export default function Leaves() {
           ))}
         </div>
 
-        {/* Phones: one card per request with every detail and the admin buttons visible */}
-        <ul className="divide-y divide-slate-100 sm:hidden">
-          {loading ? <SkeletonList /> : shown.map((l) => (
-            <li key={l._id} className="space-y-3 px-5 py-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <Avatar name={l.employee?.name} size="h-9 w-9 text-xs" />
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-800">{l.employee?.name}</p>
-                    {l.employee?.department && (
-                      <p className="text-xs text-slate-500">{l.employee.department}</p>
-                    )}
-                  </div>
-                </div>
-                <Badge value={l.status} />
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${typeTone[l.type] || typeTone.Other}`}>
-                  {l.type}
-                </span>
-                <span className="text-slate-700">
-                  {l.startDate === l.endDate ? fmt(l.startDate) : `${fmt(l.startDate)} → ${fmt(l.endDate)}`}
-                  {" · "}{days(l.startDate, l.endDate)} day{days(l.startDate, l.endDate) === 1 ? "" : "s"}
-                </span>
-              </div>
-              <p className="text-sm text-slate-600 [overflow-wrap:anywhere]">{l.reason}</p>
-              {user.role === "Admin" && l.status === "Pending" && (
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => update(l._id, "Approved")}
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 py-2.5
-                    text-sm font-medium text-emerald-700 hover:bg-emerald-100">
-                    <Check size={16} /> Approve
-                  </button>
-                  <button onClick={() => update(l._id, "Rejected")}
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 py-2.5
-                    text-sm font-medium text-rose-700 hover:bg-rose-100">
-                    <X size={16} /> Reject
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
-          {!loading && shown.length === 0 && (
-            <li className="px-5 py-12 text-center text-sm text-slate-400">No leave requests found</li>
-          )}
-        </ul>
-
-        <div className="hidden overflow-x-auto sm:block">
-          <table className="w-full min-w-[900px] text-left">
+        {/* scrolls sideways inside the card on small screens */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] sm:min-w-[900px] text-left">
             <thead className="bg-slate-50">
               <tr>
                 {["Employee", "Type", "Duration", "Reason", "Status", "Actions"].map((h) =>
-                  <th key={h} className={th}>{h}</th>
+                  <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>
                 )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? <SkeletonRows cols={6} /> : shown.map((l) => (
                 <tr key={l._id} className="transition hover:bg-slate-50/70">
-                  <td className={td}>
+                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                     <div className="flex items-center gap-3">
-                      <Avatar name={l.employee?.name} size="h-9 w-9 text-xs" />
+                      <Avatar name={l.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
                       <div>
                         <p className="font-medium text-slate-800">{l.employee?.name}</p>
                         {l.employee?.department && (
@@ -206,12 +151,12 @@ export default function Leaves() {
                       </div>
                     </div>
                   </td>
-                  <td className={td}>
+                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                     <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${typeTone[l.type] || typeTone.Other}`}>
                       {l.type}
                     </span>
                   </td>
-                  <td className={td}>
+                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                     <p className="font-medium text-slate-800">
                       {l.startDate === l.endDate ? fmt(l.startDate) : `${fmt(l.startDate)} → ${fmt(l.endDate)}`}
                     </p>
@@ -219,11 +164,11 @@ export default function Leaves() {
                       {days(l.startDate, l.endDate)} day{days(l.startDate, l.endDate) === 1 ? "" : "s"}
                     </p>
                   </td>
-                  <td className={`${td} max-w-[260px]`}>
+                  <td className={`${td} max-w-[180px] px-3! py-3! sm:max-w-[260px] sm:px-5! sm:py-4!`}>
                     <p className="truncate" title={l.reason}>{l.reason}</p>
                   </td>
-                  <td className={td}><Badge value={l.status} /></td>
-                  <td className={td}>
+                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={l.status} /></td>
+                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                     {user.role === "Admin" && l.status === "Pending" ? (
                       <div className="flex gap-2">
                         <button onClick={() => update(l._id, "Approved")}
@@ -270,7 +215,9 @@ export default function Leaves() {
             </div>
 
             <FormField label="Reason" as="textarea" rows={4} maxLength={500}
+              sanitize={sanitizeReason} allow={ALLOW_REASON_KEY} noDoubleSpace
               placeholder="Reason for leave (at least 10 characters)"
+              hint="Letters, numbers, spaces and . , ! ? ' - / & ( ) : only"
               value={form.reason} error={errors.reason}
               onChange={(v) => setForm({ ...form, reason: v })} />
 

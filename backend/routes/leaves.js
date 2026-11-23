@@ -16,6 +16,8 @@ const applySchema = z.object({
     .trim()
     .min(10, "Reason must be at least 10 characters")
     .max(500, "Reason must be at most 500 characters")
+    .regex(/^[A-Za-z0-9 .,!?'\-/&():]+$/, "Reason can only contain letters, numbers, spaces and . , ! ? ' - / & ( ) :")
+    .regex(/[A-Za-z]/, "Reason must contain some letters")
 }).refine((d) => d.endDate >= d.startDate, {
   message: "End date cannot be before start date",
   path: ["endDate"]

@@ -1,5 +1,4 @@
-// Local / traditional hosting entry point (`npm run dev`, `npm start`).
-// On Vercel the app is served by api/index.js instead.
+// Entry point: `npm run dev` locally, `npm start` on Render.
 require("dotenv").config();
 
 const app = require("./app");

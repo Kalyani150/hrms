@@ -54,7 +54,7 @@ export default function AdminDashboard({ user, data, reload }) {
         </div>
       </Hero>
 
-      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-5 xl:grid-cols-4">
         <StatCard label="Total Employees" value={data.totalEmployees} Icon={Users} tone="blue"
           hint={`Active ${data.activeEmployees} · Inactive ${data.inactiveEmployees}`} to="/employees" />
         <StatCard label="Leave Requests" value={data.pendingLeaves} Icon={CalendarDays} tone="amber"
@@ -65,7 +65,7 @@ export default function AdminDashboard({ user, data, reload }) {
           hint={`${p.paidCount}/${p.count} payslips paid`} to="/payroll" />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-4">
         <MiniStat label="Active Employees" value={data.activeEmployees} Icon={UserCheck} tone="green"
           hint={`of ${data.totalEmployees} total`} to="/employees" />
         <MiniStat label="Approved Leaves" value={data.approvedLeaves} Icon={CircleCheck} tone="blue"
@@ -75,13 +75,13 @@ export default function AdminDashboard({ user, data, reload }) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3 *:min-w-0">
-        <Card className="p-5 lg:col-span-2">
+        <Card className="p-4 sm:p-5 lg:col-span-2">
           <CardTitle sub="Check-ins over the last 7 working days" to="/attendance">
             Attendance Trend
           </CardTitle>
           <div className="mt-5"><AttendanceChart data={data.attendanceTrend} /></div>
         </Card>
-        <Card className="p-5">
+        <Card className="p-4 sm:p-5">
           <CardTitle sub="Active employees per department">By Department</CardTitle>
           <div className="mt-5"><DepartmentBars rows={data.departmentCounts} /></div>
         </Card>
@@ -90,71 +90,33 @@ export default function AdminDashboard({ user, data, reload }) {
       <div className="grid gap-6 xl:grid-cols-3 *:min-w-0">
         <div className="space-y-6 xl:col-span-2">
         <Card className="overflow-hidden">
-          <div className="p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
-          {/* Phones: one card per request, so Approve / Reject are always visible */}
-          <ul className="divide-y divide-slate-100 sm:hidden">
-            {data.recentLeaves.map((l) => (
-              <li key={l._id} className="space-y-3 px-5 py-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <Avatar name={l.employee?.name} size="h-9 w-9 text-xs" />
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-slate-800">{l.employee?.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {l.type} · {l.startDate === l.endDate
-                          ? short(l.startDate)
-                          : `${short(l.startDate)} – ${short(l.endDate)}`}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge value={l.status} />
-                </div>
-                {l.status === "Pending" && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => review(l._id, "Approved")}
-                      className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-50 py-2.5
-                      text-sm font-medium text-emerald-700 hover:bg-emerald-100">
-                      <Check size={16} /> Approve
-                    </button>
-                    <button onClick={() => review(l._id, "Rejected")}
-                      className="flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 py-2.5
-                      text-sm font-medium text-rose-700 hover:bg-rose-100">
-                      <X size={16} /> Reject
-                    </button>
-                  </div>
-                )}
-              </li>
-            ))}
-            {data.recentLeaves.length === 0 && (
-              <li className="px-5 py-10 text-center text-sm text-slate-400">No leave requests yet</li>
-            )}
-          </ul>
-
-          <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[620px] text-left">
+          <div className="p-4 sm:p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
+          {/* same table on every screen size; scrolls sideways inside the card on small screens */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-left">
               <thead className="bg-slate-50">
                 <tr>
                   {["Employee Name", "Leave Type", "Date", "Status", "Action"].map((h) =>
-                    <th key={h} className={th}>{h}</th>)}
+                    <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {data.recentLeaves.map((l) => (
                   <tr key={l._id} className="hover:bg-slate-50/70">
-                    <td className={td}>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                       <div className="flex items-center gap-3">
-                        <Avatar name={l.employee?.name} size="h-9 w-9 text-xs" />
+                        <Avatar name={l.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
                         <span className="font-medium text-slate-800">{l.employee?.name}</span>
                       </div>
                     </td>
-                    <td className={td}>{l.type}</td>
-                    <td className={td}>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{l.type}</td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                       {l.startDate === l.endDate
                         ? short(l.startDate)
                         : `${short(l.startDate)} – ${short(l.endDate)}`}
                     </td>
-                    <td className={td}><Badge value={l.status} /></td>
-                    <td className={td}>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={l.status} /></td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                       {l.status === "Pending" ? (
                         <div className="flex gap-2">
                           <button onClick={() => review(l._id, "Approved")} title="Approve"
@@ -180,7 +142,7 @@ export default function AdminDashboard({ user, data, reload }) {
           </div>
         </Card>
 
-        <Card className="p-5">
+        <Card className="p-4 sm:p-5">
           <CardTitle to="/employees" sub="The latest people added to the team">
             Recently Added Employees
           </CardTitle>
@@ -188,18 +150,27 @@ export default function AdminDashboard({ user, data, reload }) {
             <ul className="mt-4 divide-y divide-slate-100">
               {data.recentEmployees.map((emp) => (
                 <li key={emp._id}>
-                  <Link to="/employees" className="flex items-center gap-4 rounded-xl py-3 transition hover:bg-slate-50">
-                    <Avatar name={emp.name} size="h-11 w-11 text-sm" />
+                  <Link to="/employees" className="flex items-start gap-3 rounded-xl py-3 transition hover:bg-slate-50 sm:items-center sm:gap-4">
+                    <Avatar name={emp.name} size="h-10 w-10 shrink-0 text-sm sm:h-11 sm:w-11" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-slate-800">{emp.name}</p>
-                      <p className="truncate text-sm text-slate-500">
+                      <p className="text-sm text-slate-500 [overflow-wrap:anywhere] sm:truncate">
                         {[emp.designation, emp.department].filter(Boolean).join(" · ") || emp.email}
                       </p>
+                      {/* Phones: status and join date sit under the name instead of squeezing it */}
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 sm:hidden">
+                        <Badge value={emp.status} />
+                        <span className="text-xs text-slate-400">
+                          Joined {emp.joiningDate ? short(emp.joiningDate.slice(0, 10)) : "—"}
+                        </span>
+                      </div>
                     </div>
-                    <span className="hidden text-xs text-slate-400 sm:block">
-                      Joined {emp.joiningDate ? short(emp.joiningDate.slice(0, 10)) : "—"}
-                    </span>
-                    <Badge value={emp.status} />
+                    <div className="hidden shrink-0 items-center gap-4 sm:flex">
+                      <span className="text-xs text-slate-400">
+                        Joined {emp.joiningDate ? short(emp.joiningDate.slice(0, 10)) : "—"}
+                      </span>
+                      <Badge value={emp.status} />
+                    </div>
                   </Link>
                 </li>
               ))}
@@ -211,12 +182,12 @@ export default function AdminDashboard({ user, data, reload }) {
         </div>
 
         <div className="space-y-6">
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             <CardTitle to="/attendance">Employee Status</CardTitle>
             <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1">
               {tabs.map(([key, label, count]) => (
                 <button key={key} onClick={() => setTab(key)}
-                  className={`rounded-lg px-2 py-2 text-xs font-medium transition ${
+                  className={`rounded-lg px-1 py-2 text-[11px] font-medium transition sm:px-2 sm:text-xs ${
                     tab === key ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"
                   }`}>
                   {label} ({count})
@@ -231,7 +202,7 @@ export default function AdminDashboard({ user, data, reload }) {
                     <p className="truncate text-sm font-semibold text-slate-800">{e.name}</p>
                     <p className="truncate text-xs text-slate-500">{e.designation || "—"}</p>
                   </div>
-                  <span className="text-xs text-slate-500">
+                  <span className="max-w-[5.5rem] shrink-0 text-right text-xs text-slate-500 sm:max-w-none sm:whitespace-nowrap">
                     {tab === "present" && `${e.note} · ${time(e.time)}`}
                     {tab === "onLeave" && `Until ${short(e.until.slice(0, 10))}`}
                     {tab === "absent" && "Not in"}
@@ -244,7 +215,7 @@ export default function AdminDashboard({ user, data, reload }) {
             </ul>
           </Card>
 
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             <CardTitle sub={monthLabel}>Payroll Overview</CardTitle>
             <p className="mt-4 text-xs text-slate-500">Total Payroll</p>
             <p className="text-3xl font-bold text-slate-800">{money(p.total)}</p>

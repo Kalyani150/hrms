@@ -17,18 +17,16 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, portal = "employee") => {
     const { data } = await api.post("/auth/login", {
-      email, password
+      email, password, portal
     });
     setUser(data.user);
   };
 
+  // Creates the account only; the user then signs in from the login page
   const register = async (name, email, password) => {
-    const { data } = await api.post("/auth/register", {
-      name, email, password
-    });
-    setUser(data.user);
+    await api.post("/auth/register", { name, email, password });
   };
 
   const logout = async () => {

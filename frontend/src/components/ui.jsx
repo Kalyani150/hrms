@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { X, ArrowRight } from "lucide-react";
+import { X, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 
 /* ---------- shared class names ---------- */
@@ -127,7 +127,7 @@ const badgeTones = {
 
 export function Badge({ value }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1
+    <span className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1
       text-xs font-medium ring-1 ring-inset ${
         badgeTones[value] || "bg-slate-100 text-slate-600 ring-slate-200"
       }`}>
@@ -231,6 +231,46 @@ export function Modal({ title, onClose, children }) {
         </div>
         <div className="p-6">{children}</div>
       </div>
+    </div>
+  );
+}
+
+/* Page numbers: Previous  1 2 3 ... 9  Next. Shows nothing when everything fits on one page. */
+export function Pagination({ page, pageSize, total, onChange }) {
+  const pages = Math.ceil(total / pageSize);
+  if (pages <= 1) return null;
+
+  // 1 ... (page-1) page (page+1) ... last
+  const shown = [...new Set([1, page - 1, page, page + 1, pages])]
+    .filter((n) => n >= 1 && n <= pages).sort((a, b) => a - b);
+  const items = shown.flatMap((n, i) => (i && n - shown[i - 1] > 1 ? ["gap" + n, n] : [n]));
+
+  const from = (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
+  const nav = "flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium " +
+    "text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40";
+
+  return (
+    <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+      <p className="text-sm text-slate-500">Showing {from}–{to} of {total}</p>
+      <nav aria-label="Pagination" className="flex flex-wrap items-center justify-center gap-1.5">
+        <button onClick={() => onChange(page - 1)} disabled={page === 1} className={nav}>
+          <ChevronLeft size={16} /> Previous
+        </button>
+        {items.map((n) => typeof n === "string" ? (
+          <span key={n} className="px-1 text-slate-400">…</span>
+        ) : (
+          <button key={n} onClick={() => onChange(n)} aria-current={n === page ? "page" : undefined}
+            className={`h-9 min-w-9 rounded-xl px-2 text-sm font-medium transition ${
+              n === page ? "bg-blue-600 text-white shadow-sm" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+            }`}>
+            {n}
+          </button>
+        ))}
+        <button onClick={() => onChange(page + 1)} disabled={page === pages} className={nav}>
+          Next <ChevronRight size={16} />
+        </button>
+      </nav>
     </div>
   );
 }

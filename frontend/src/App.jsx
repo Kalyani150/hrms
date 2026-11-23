@@ -29,7 +29,8 @@ export default function App() {
 
         <Routes>
           <Route element={<PublicRoute />}>
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<Login portal="employee" />} />
+            <Route path="/admin/login" element={<Login portal="admin" />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />

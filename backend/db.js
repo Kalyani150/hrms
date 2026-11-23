@@ -1,8 +1,7 @@
 // One shared MongoDB connection.
-// Locally it is opened once at startup; on Vercel (serverless) it is opened on the first request
-// of each function instance and then reused, so warm requests are fast.
+// Opened once at startup (server.js) and reused by every request.
 const mongoose = require("mongoose");
-const { ensureAdmin } = require("./scripts/seedAdmin");
+const User = require("./models/User");
 
 let ready = null;
 
@@ -21,7 +20,7 @@ function connectDb() {
 
       // A fresh database has no users: create the first admin from ADMIN_* so you can sign in
       try {
-        const seeded = await ensureAdmin({ onlyIfNoAdmin: true });
+        const seeded = await User.ensureAdmin({ onlyIfNoAdmin: true });
         if (seeded.created) console.log(`First admin created: ${seeded.email}`);
       } catch (err) {
         console.warn("First admin was not created:", err.message);

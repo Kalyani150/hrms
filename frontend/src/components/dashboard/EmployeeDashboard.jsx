@@ -66,7 +66,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
         </div>
       </Hero>
 
-      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-5 xl:grid-cols-4">
         <StatCard label="Leaves Availed" value={leaveStats.taken} Icon={CalendarDays} tone="amber"
           hint={`of ${leaveStats.allowance} days this year`} to="/leaves" />
         <StatCard label="Leaves Remaining" value={leaveStats.remaining} Icon={Sparkles} tone="green"
@@ -79,7 +79,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
 
       <div className="grid gap-6 xl:grid-cols-3 *:min-w-0">
         <div className="space-y-6 xl:col-span-2">
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             <CardTitle sub="Hours worked on your last 7 attendance days" to="/attendance">
               My Hours
             </CardTitle>
@@ -87,11 +87,11 @@ export default function EmployeeDashboard({ user, data, reload }) {
           </Card>
 
           <Card className="overflow-hidden">
-            <div className="p-5"><CardTitle to="/attendance">Recent Attendance</CardTitle></div>
+            <div className="p-4 sm:p-5"><CardTitle to="/attendance">Recent Attendance</CardTitle></div>
             {/* Phones: one row per day with the status always visible */}
             <ul className="divide-y divide-slate-100 sm:hidden">
               {data.attendance.slice(0, 5).map((a) => (
-                <li key={a._id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                <li key={a._id} className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
                   <div>
                     <p className="font-medium text-slate-800">{a.date}</p>
                     <p className="text-xs text-slate-500">
@@ -102,7 +102,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
                 </li>
               ))}
               {data.attendance.length === 0 && (
-                <li className="px-5 py-10 text-center text-sm text-slate-400">No attendance yet</li>
+                <li className="px-4 py-10 text-center sm:px-5 text-sm text-slate-400">No attendance yet</li>
               )}
             </ul>
 
@@ -122,7 +122,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
                     </tr>
                   ))}
                   {data.attendance.length === 0 && (
-                    <tr><td colSpan={4} className="px-5 py-10 text-center text-sm text-slate-400">
+                    <tr><td colSpan={4} className="px-4 py-10 text-center sm:px-5 text-sm text-slate-400">
                       No attendance yet
                     </td></tr>
                   )}
@@ -165,7 +165,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
             </div>
           </Card>
 
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             <CardTitle to="/payroll">Latest Payslip</CardTitle>
             {latest ? (
               <div className="mt-4">
@@ -185,7 +185,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
             )}
           </Card>
 
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             <CardTitle to="/leaves">My Requests</CardTitle>
             <ul className="mt-4 space-y-3">
               {data.leaves.map((l) => (

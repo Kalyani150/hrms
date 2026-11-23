@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search, Plus, Pencil, UserX, Users, UserCheck, UserMinus, Building2,
   LayoutGrid, List, Mail, Phone, MapPin, CalendarDays
@@ -6,7 +6,7 @@ import {
 import api from "../api/axios";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard,
+  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard, Pagination,
   inputCls, btnPrimary, btnGhost, th, td
 } from "../components/ui";
 import FormField from "../components/FormField";
@@ -17,6 +17,14 @@ import {
   sanitizeEmail, normalizePhone, isValid, ALLOW_NAME_KEY, ALLOW_PHONE_KEY,
   ALLOW_EMAIL_KEY, EMAIL_RULES_HINT, ALLOW_TEXT_KEY, sanitizeText
 } from "../utils/validation";
+
+// Choices in the Add / Edit form's Department dropdown (departments already in use are added too)
+const DEFAULT_DEPARTMENTS = [
+  "Human Resources", "Engineering", "Finance", "Sales", "Marketing",
+  "Operations", "IT Support", "Customer Support", "Administration"
+];
+
+const PAGE_SIZE = 4; // employees per page
 
 const empty = {
   name: "", email: "", password: "",
@@ -32,13 +40,13 @@ export default function Employees() {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("");
   const [status, setStatus] = useState("");
-  const [sort, setSort] = useState("");
+  const [salaryFilter, setSalaryFilter] = useState("");
+  const [page, setPage] = useState(1);
   const [view, setView] = useState("cards");
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState(null);
   const [modal, setModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  const departmentRef = useRef(null);
 
   const load = async () => {
     try {
@@ -53,18 +61,7 @@ export default function Employees() {
 
   useEffect(() => { load(); }, []);
 
-  const sorters = {
-    "": () => 0,
-    "name-asc": (a, b) => a.name.localeCompare(b.name),
-    "name-desc": (a, b) => b.name.localeCompare(a.name),
-    "joined-new": (a, b) => new Date(b.joiningDate) - new Date(a.joiningDate),
-    "joined-old": (a, b) => new Date(a.joiningDate) - new Date(b.joiningDate),
-    "salary-asc": (a, b) => a.salary - b.salary,
-    "salary-desc": (a, b) => b.salary - a.salary,
-    "dept-asc": (a, b) => (a.department || "").localeCompare(b.department || "")
-  };
-
-  const filtered = employees.filter((e) => {
+  const matching = employees.filter((e) => {
     const query = search.trim().toLowerCase();
     return (
       (!query ||
@@ -73,7 +70,19 @@ export default function Employees() {
       (!department || e.department === department) &&
       (!status || e.status === status)
     );
-  }).sort(sorters[sort] || sorters[""]);
+  });
+
+  // "Lowest" / "Highest" keep only the employee(s) with the lowest / highest salary in the current results
+  const salaries = matching.map((e) => e.salary);
+  const target = salaryFilter === "lowest" ? Math.min(...salaries)
+    : salaryFilter === "highest" ? Math.max(...salaries) : null;
+  const filtered = target === null ? matching : matching.filter((e) => e.salary === target);
+
+  // Only one page of employees is drawn at a time (page is clamped if the list shrinks, e.g. after a deactivate)
+  const lastPage = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, lastPage);
+  const visible = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const goToPage = (n) => { setPage(n); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   // Field errors for the Add / Edit form ("" = valid)
   const errors = {
@@ -162,6 +171,7 @@ export default function Employees() {
 
   const active = employees.filter((e) => e.status === "Active").length;
   const departments = [...new Set(employees.map((e) => e.department).filter(Boolean))];
+  const departmentOptions = [...new Set([...DEFAULT_DEPARTMENTS, ...departments])].sort();
   const payroll = employees.filter((e) => e.status === "Active")
     .reduce((t, e) => t + e.salary, 0);
 
@@ -170,19 +180,19 @@ export default function Employees() {
       <button onClick={() => openEdit(emp)} aria-label="Edit" title="Edit"
         className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs
         font-medium text-blue-700 hover:bg-blue-100 sm:px-3">
-        <Pencil size={13} /> <span className="hidden sm:inline">Edit</span>
+        <Pencil size={13} /> <span>Edit</span>
       </button>
       {emp.status === "Inactive" ? (
         <button onClick={() => reactivate(emp._id)} aria-label="Reactivate" title="Reactivate"
           className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs
           font-medium text-emerald-700 hover:bg-emerald-100 sm:px-3">
-          <UserCheck size={13} /> <span className="hidden sm:inline">Reactivate</span>
+          <UserCheck size={13} /> <span>Reactivate</span>
         </button>
       ) : (
         <button onClick={() => deactivate(emp._id)} aria-label="Deactivate" title="Deactivate"
           className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs
           font-medium text-rose-700 hover:bg-rose-100 sm:px-3">
-          <UserX size={13} /> <span className="hidden sm:inline">Deactivate</span>
+          <UserX size={13} /> <span>Deactivate</span>
         </button>
       )}
     </div>
@@ -196,63 +206,46 @@ export default function Employees() {
         </button>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 min-[320px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-5 xl:grid-cols-4">
         <StatCard label="Total Employees" value={employees.length} Icon={Users} tone="blue"
-          hint="Click to show everyone"
-          active={!status && !department && !search}
-          onClick={() => { setStatus(""); setDepartment(""); setSearch(""); }} />
+          hint="Everyone on the team" />
         <StatCard label="Active" value={active} Icon={UserCheck} tone="green"
-          hint={`Monthly payroll ₹${payroll.toLocaleString("en-IN")}`}
-          active={status === "Active"}
-          onClick={() => setStatus(status === "Active" ? "" : "Active")} />
+          hint={`Monthly payroll ₹${payroll.toLocaleString("en-IN")}`} />
         <StatCard label="Inactive" value={employees.length - active} Icon={UserMinus} tone="rose"
-          hint="Click to show deactivated"
-          active={status === "Inactive"}
-          onClick={() => setStatus(status === "Inactive" ? "" : "Inactive")} />
+          hint="Deactivated accounts" />
         <StatCard label="Departments" value={departments.length} Icon={Building2} tone="violet"
-          hint={departments.slice(0, 3).join(" · ") || "—"}
-          active={!!department}
-          onClick={() => {
-            departmentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-            departmentRef.current?.focus();
-          }} />
+          hint={departments.slice(0, 3).join(" · ") || "—"} />
       </div>
 
-      <Card className="grid gap-3 p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto]">
-        <div className="relative">
+      <Card className="grid grid-cols-2 gap-3 p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto]">
+        <div className="relative min-w-0">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-          <input placeholder="Search name, email, phone, department or role"
-            value={search} onChange={(e) => setSearch(e.target.value)}
+          <input placeholder="Search employees" title="Search by name, email, phone, department or role"
+            value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className={`${inputCls} cursor-pointer pl-11`} />
         </div>
 
-        <select ref={departmentRef} value={department}
-          onChange={(e) => setDepartment(e.target.value)} className={inputCls}>
+        <select value={department} onChange={(e) => { setDepartment(e.target.value); setPage(1); }} className={`${inputCls} min-w-0`}>
           <option value="">All Departments</option>
           {departments.map((d) => <option key={d}>{d}</option>)}
         </select>
 
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className={inputCls}>
+        <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={`${inputCls} min-w-0`}>
           <option value="">All Status</option>
           <option>Active</option>
           <option>Inactive</option>
         </select>
 
-        <select value={sort} onChange={(e) => setSort(e.target.value)} className={inputCls}>
-          <option value="">Default Sort (newest added)</option>
-          <option value="name-asc">Name A → Z</option>
-          <option value="name-desc">Name Z → A</option>
-          <option value="joined-new">Joined: newest first</option>
-          <option value="joined-old">Joined: oldest first</option>
-          <option value="salary-asc">Salary: low to high</option>
-          <option value="salary-desc">Salary: high to low</option>
-          <option value="dept-asc">Department A → Z</option>
+        <select value={salaryFilter} onChange={(e) => { setSalaryFilter(e.target.value); setPage(1); }} className={`${inputCls} min-w-0`}>
+          <option value="">All Salaries</option>
+          <option value="lowest">Lowest salary</option>
+          <option value="highest">Highest salary</option>
         </select>
 
-        <div className="flex rounded-xl bg-slate-100 p-1">
+        <div className="col-span-2 flex w-fit justify-self-end rounded-xl bg-slate-100 p-0.5 md:col-span-1 md:p-1">
           {[["cards", LayoutGrid], ["table", List]].map(([key, Icon]) => (
             <button key={key} onClick={() => setView(key)} title={`${key} view`}
-              className={`rounded-lg px-3 py-2 transition ${
+              className={`rounded-lg px-2.5 py-1.5 transition md:px-3 md:py-2 ${
                 view === key ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"
               }`}>
               <Icon size={18} />
@@ -268,7 +261,7 @@ export default function Employees() {
           </div>
         ) : filtered.length ? (
           <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((emp) => (
+            {visible.map((emp) => (
               <Card key={emp._id}
                 className="cursor-pointer overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md"
                 onClick={() => openEdit(emp)}>
@@ -315,42 +308,43 @@ export default function Employees() {
         )
       ) : (
         <Card className="overflow-hidden">
+          {/* scrolls sideways inside the card on small screens */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[950px] text-left">
+            <table className="w-full min-w-[780px] sm:min-w-[950px] text-left">
               <thead className="bg-slate-50">
                 <tr>
                   {["Employee", "Contact", "Department", "Designation", "Salary", "Status", "Actions"].map((h) =>
-                    <th key={h} className={th}>{h}</th>
+                    <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>
                   )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {loading ? <SkeletonRows cols={7} /> : filtered.map((emp) => (
+                {loading ? <SkeletonRows cols={7} /> : visible.map((emp) => (
                   <tr key={emp._id} className="transition hover:bg-slate-50/70">
-                    <td className={td}>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                       <div className="flex items-center gap-3">
-                        <Avatar name={emp.name} />
+                        <Avatar name={emp.name} size="h-9 w-9 text-xs sm:h-10 sm:w-10 sm:text-sm" />
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-800">{emp.name}</p>
                           <p className="text-xs text-slate-500">{emp.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className={`${td} max-w-[220px]`}>
+                    <td className={`${td} max-w-[180px] px-3! py-3! sm:max-w-[220px] sm:px-5! sm:py-4!`}>
                       <p>{emp.phone || <span className="text-slate-300">—</span>}</p>
                       {emp.address && (
                         <p className="truncate text-xs text-slate-500" title={emp.address}>{emp.address}</p>
                       )}
                     </td>
-                    <td className={td}>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
                       <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                         {emp.department}
                       </span>
                     </td>
-                    <td className={td}>{emp.designation}</td>
-                    <td className={`${td} font-semibold text-slate-800`}>₹{emp.salary.toLocaleString("en-IN")}</td>
-                    <td className={td}><Badge value={emp.status} /></td>
-                    <td className={td}>{actionButtons(emp)}</td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{emp.designation}</td>
+                    <td className={`${td} whitespace-nowrap font-semibold text-slate-800 px-3! py-3! sm:px-5! sm:py-4!`}>₹{emp.salary.toLocaleString("en-IN")}</td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={emp.status} /></td>
+                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{actionButtons(emp)}</td>
                   </tr>
                 ))}
                 {!loading && filtered.length === 0 && <EmptyRow cols={7} text="No employees found" />}
@@ -358,6 +352,10 @@ export default function Employees() {
             </table>
           </div>
         </Card>
+      )}
+
+      {!loading && (
+        <Pagination page={currentPage} pageSize={PAGE_SIZE} total={filtered.length} onChange={goToPage} />
       )}
 
       {modal && (
@@ -380,10 +378,11 @@ export default function Employees() {
                 sanitize={sanitizePhone} allow={ALLOW_PHONE_KEY}
                 maxLength={10} placeholder="10 digits" />
 
-              <FormField label="Department" value={form.department} error={errors.department}
-                onChange={(v) => setForm({ ...form, department: v })}
-                sanitize={sanitizeText} allow={ALLOW_TEXT_KEY} noDoubleSpace maxLength={50}
-                placeholder="e.g. Human Resources" />
+              <FormField label="Department" as="select" value={form.department} error={errors.department}
+                onChange={(v) => setForm({ ...form, department: v })}>
+                <option value="">Select department</option>
+                {departmentOptions.map((d) => <option key={d} value={d}>{d}</option>)}
+              </FormField>
 
               <FormField label="Designation" value={form.designation} error={errors.designation}
                 onChange={(v) => setForm({ ...form, designation: v })}
