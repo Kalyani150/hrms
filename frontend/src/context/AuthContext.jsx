@@ -25,11 +25,10 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, password) => {
-    // The account must be approved by an admin first, so the user is not signed in here
     const { data } = await api.post("/auth/register", {
       name, email, password
     });
-    return data.message;
+    setUser(data.user);
   };
 
   const logout = async () => {
