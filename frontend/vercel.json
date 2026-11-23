@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://YOUR-BACKEND.onrender.com/api/:path*"
+      "destination": "https://hrms-backend-0l25.onrender.com/api/:path*"
     },
     {
       "source": "/((?!api/).*)",

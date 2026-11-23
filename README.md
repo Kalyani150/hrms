@@ -8,7 +8,7 @@ leave requests and monthly payroll, with two roles: **Admin** and **Employee**.
 | | Address |
 |---|---|
 | **Website (frontend)** | https://frontend-tan-beta-88.vercel.app |
-| **API (backend)** | Render web service, `https://<your-service>.onrender.com` (health check: `/api/health`) |
+| **API (backend)** | https://hrms-backend-0l25.onrender.com (Render; health check: `/api/health`) |
 
 The frontend is hosted on Vercel and the backend on Render. Both redeploy automatically on every
 push to `main` (see `DEPLOYMENT.md`).
