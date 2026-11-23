@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Lock, Eye, EyeOff, Check, Circle } from "lucide-react";
 import FormField from "./FormField";
+import { ALLOW_PASSWORD_KEY, sanitizePassword } from "../utils/validation";
 
 const RULES = [
   ["At least 8 characters", (v) => v.length >= 8],
@@ -17,6 +18,7 @@ export default function PasswordField({ showRules = false, value, ...props }) {
   return (
     <div>
       <FormField type={show ? "text" : "password"} value={value} leftIcon={<Lock size={18} />}
+        allow={ALLOW_PASSWORD_KEY} sanitize={sanitizePassword} maxLength={128}
         rightSlot={
           <button type="button" onClick={() => setShow(!show)}
             aria-label={show ? "Hide password" : "Show password"}

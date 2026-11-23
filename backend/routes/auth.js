@@ -197,6 +197,10 @@ router.put("/change-password", protect, async (req, res) => {
     return res.status(400).json({ message: "Current password is incorrect" });
   }
 
+  if (parsed.data.currentPassword === parsed.data.newPassword) {
+    return res.status(400).json({ message: "New password must be different from the current password" });
+  }
+
   user.password = parsed.data.newPassword; // hashed by the pre-save hook
   await user.save();
   res.json({ message: "Password updated" });

@@ -5,8 +5,9 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { PageHeader, Card, Badge, btnPrimary, btnGhost } from "../components/ui";
 import FormField from "../components/FormField";
+import PasswordField from "../components/PasswordField";
 import {
-  validateName, validatePhone, validateAddress, validatePassword, validateRequired,
+  validateName, validatePhone, validateAddress, validateNewPassword, validateRequired,
   validateConfirm, sanitizeName, sanitizePhone, normalizePhone, isValid,
   ALLOW_NAME_KEY, ALLOW_PHONE_KEY
 } from "../utils/validation";
@@ -34,7 +35,7 @@ export default function Profile() {
 
   const pwErrors = {
     currentPassword: validateRequired(pw.currentPassword, "Current password"),
-    newPassword: validatePassword(pw.newPassword),
+    newPassword: validateNewPassword(pw.newPassword, pw.currentPassword),
     confirm: validateConfirm(pw.newPassword, pw.confirm)
   };
   const pwValid = isValid(pwErrors);
@@ -178,14 +179,13 @@ export default function Profile() {
         <Card className="p-6">
           <h2 className="mb-5 font-bold text-slate-800">Change password</h2>
           <form onSubmit={savePassword} noValidate className="space-y-4">
-            <FormField label="Current password" type="password" autoComplete="current-password"
+            <PasswordField label="Current password" autoComplete="current-password"
               value={pw.currentPassword} error={pwErrors.currentPassword}
               onChange={(v) => setPw({ ...pw, currentPassword: v })} />
-            <FormField label="New password" type="password" autoComplete="new-password"
+            <PasswordField label="New password" showRules autoComplete="new-password"
               value={pw.newPassword} error={pwErrors.newPassword}
-              onChange={(v) => setPw({ ...pw, newPassword: v })}
-              hint="8+ characters with uppercase, lowercase, number and symbol" />
-            <FormField label="Confirm new password" type="password" autoComplete="new-password"
+              onChange={(v) => setPw({ ...pw, newPassword: v })} />
+            <PasswordField label="Confirm new password" autoComplete="new-password"
               value={pw.confirm} error={pwErrors.confirm}
               onChange={(v) => setPw({ ...pw, confirm: v })} />
             <div className="flex justify-end">

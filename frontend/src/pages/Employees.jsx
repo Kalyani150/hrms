@@ -10,6 +10,7 @@ import {
   inputCls, btnPrimary, btnGhost, th, td
 } from "../components/ui";
 import FormField from "../components/FormField";
+import PasswordField from "../components/PasswordField";
 import {
   validateName, validateEmail, validatePhone, validatePassword, validateText,
   validateSalary, validateDate, validateAddress, sanitizeName, sanitizePhone,
@@ -405,10 +406,9 @@ export default function Employees() {
             </div>
 
             {!editing && (
-              <FormField label="Initial Password" type="password" value={form.password}
+              <PasswordField label="Initial Password" showRules value={form.password}
                 error={errors.password} autoComplete="new-password"
-                onChange={(v) => setForm({ ...form, password: v })}
-                hint="8+ characters with uppercase, lowercase, number and symbol" />
+                onChange={(v) => setForm({ ...form, password: v })} />
             )}
 
             <div className="flex justify-end gap-3 pt-2">

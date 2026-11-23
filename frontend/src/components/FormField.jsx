@@ -10,12 +10,12 @@ import { inputCls } from "./ui";
  */
 export default function FormField({
   label, value, onChange, error = "", type = "text", as = "input",
-  sanitize, allow, noDoubleSpace = false, leftIcon, rightSlot, hint,
+  sanitize, allow, noDoubleSpace = false, forceShow = false, leftIcon, rightSlot, hint,
   className = "", ...rest
 }) {
   const [touched, setTouched] = useState(false);
 
-  const invalid = touched && !!error;
+  const invalid = (touched || forceShow) && !!error;
   const valid = touched && !error && String(value ?? "") !== "";
 
   const state = invalid

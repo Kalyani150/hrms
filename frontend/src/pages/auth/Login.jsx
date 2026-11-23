@@ -8,7 +8,7 @@ import FormField from "../../components/FormField";
 import PasswordField from "../../components/PasswordField";
 import { btnPrimary } from "../../components/ui";
 import {
-  validateEmail, validateRequired, sanitizeEmail, isValid, ALLOW_EMAIL_KEY
+  validateEmail, validatePassword, sanitizeEmail, isValid, ALLOW_EMAIL_KEY
 } from "../../utils/validation";
 
 export default function Login() {
@@ -18,16 +18,17 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  // Sign-in only needs a password to be entered; the strength rules apply when one is created
   const errors = {
     email: validateEmail(email),
-    password: validateRequired(password, "Password")
+    password: password ? validatePassword(password) : "Password is required"
   };
   const formValid = isValid(errors);
 
   const submit = async (e) => {
     e.preventDefault();
+    setSubmitted(true);
     if (!formValid) return;
     setLoading(true);
 
@@ -47,12 +48,12 @@ export default function Login() {
       footer={<>New here? <Link to="/register" className="font-semibold text-blue-600 hover:underline">Create an account</Link></>}>
       <form onSubmit={submit} noValidate className="space-y-5">
         <FormField label="Email" type="email" value={email} onChange={setEmail}
-          error={errors.email} sanitize={sanitizeEmail} allow={ALLOW_EMAIL_KEY} autoComplete="email"
+          error={errors.email} forceShow={submitted} maxLength={254} sanitize={sanitizeEmail} allow={ALLOW_EMAIL_KEY} autoComplete="email"
           placeholder="you@company.com" leftIcon={<Mail size={18} />} />
 
         <div>
           <PasswordField label="Password" value={password} onChange={setPassword}
-            error={errors.password} autoComplete="current-password" placeholder="Enter your password" />
+            error={errors.password} forceShow={submitted} autoComplete="current-password" placeholder="Enter your password" />
           <div className="mt-2 text-right">
             <Link to="/forgot-password" className="text-sm font-medium text-blue-600 hover:underline">
               Forgot password?
@@ -60,7 +61,7 @@ export default function Login() {
           </div>
         </div>
 
-        <button disabled={loading || !formValid} className={`${btnPrimary} w-full py-3.5`}>
+        <button disabled={loading} className={`${btnPrimary} w-full py-3.5`}>
           {loading ? "Signing in..." : "Sign in"}
         </button>
       </form>

@@ -4,7 +4,7 @@ const { z } = require("zod");
 const User = require("../models/User");
 const { protect, authorize } = require("../middleware/auth");
 const {
-  nameSchema, emailSchema, phoneSchema, passwordSchema, textSchema
+  nameSchema, emailSchema, phoneSchema, passwordSchema, textSchema, amountSchema
 } = require("../utils/validation");
 
 const router = express.Router();
@@ -19,7 +19,7 @@ const baseFields = {
   designation: textSchema("Designation"),
   phone: phoneSchema,
   address: z.string().trim().max(300, "Address must be at most 300 characters"),
-  salary: z.coerce.number("Salary must be a number").min(0, "Salary cannot be negative"),
+  salary: amountSchema("Salary"),
   // the form sends "" when the date is left blank
   joiningDate: z.preprocess((v) => (v === "" ? undefined : v), z.coerce.date().optional()),
   status: z.enum(["Active", "Inactive"])

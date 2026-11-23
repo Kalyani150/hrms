@@ -8,9 +8,13 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Field, Modal, StatCard,
+  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard,
   inputCls, btnPrimary, btnGhost, th, td
 } from "../components/ui";
+import FormField from "../components/FormField";
+import {
+  validateAmount, validateDeductions, validateSelect, validateMonth, isValid
+} from "../utils/validation";
 
 const money = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
@@ -96,8 +100,27 @@ export default function Payroll() {
     }
   }, [isAdmin]);
 
+  const selectedEmployee = employees.find((e) => e._id === form.employee);
+  const singleErrors = {
+    employee: validateSelect(form.employee, "an employee"),
+    month: validateMonth(form.month),
+    bonus: validateAmount(form.bonus, "Bonus"),
+    deductions: validateDeductions(selectedEmployee?.salary, form.bonus, form.deductions)
+  };
+  const singleValid = isValid(singleErrors);
+
+  const editErrors = {
+    basic: validateAmount(editForm.basic, "Basic pay"),
+    bonus: validateAmount(editForm.bonus, "Bonus"),
+    deductions: validateDeductions(editForm.basic, editForm.bonus, editForm.deductions)
+  };
+  const editValid = isValid(editErrors);
+
+  const bulkError = validateMonth(bulkMonth);
+
   const generate = async (e) => {
     e.preventDefault();
+    if (!singleValid) return;
 
     try {
       await api.post("/payroll", {
@@ -121,6 +144,7 @@ export default function Payroll() {
 
   const generateAll = async (e) => {
     e.preventDefault();
+    if (bulkError) return;
     try {
       const { data } = await api.post("/payroll/generate", { month: bulkMonth });
       toast.success(data.message);
@@ -146,6 +170,7 @@ export default function Payroll() {
 
   const saveEdit = async (e) => {
     e.preventDefault();
+    if (!editValid) return;
     try {
       const { data } = await api.put(`/payroll/${editing._id}`, {
         basic: Number(editForm.basic),
@@ -389,37 +414,30 @@ export default function Payroll() {
 
       {modal === "single" && (
         <Modal title="Generate Payroll" onClose={() => setModal(null)}>
-          <form onSubmit={generate} className="space-y-4">
-            <Field label="Employee">
-              <select required value={form.employee}
-                onChange={(e) => setForm({ ...form, employee: e.target.value })}
-                className={inputCls}>
-                <option value="">Select Employee</option>
-                {employees.map((e) =>
-                  <option key={e._id} value={e._id}>{e.name} – {money(e.salary)}</option>
-                )}
-              </select>
-            </Field>
+          <form onSubmit={generate} noValidate className="space-y-4">
+            <FormField label="Employee" as="select" value={form.employee} error={singleErrors.employee}
+              onChange={(v) => setForm({ ...form, employee: v })}>
+              <option value="">Select Employee</option>
+              {employees.map((e) =>
+                <option key={e._id} value={e._id}>{e.name} – {money(e.salary)}</option>
+              )}
+            </FormField>
 
-            <Field label="Month">
-              <input type="month" required value={form.month}
-                onChange={(e) => setForm({ ...form, month: e.target.value })}
-                className={inputCls} />
-            </Field>
+            <FormField label="Month" type="month" value={form.month} error={singleErrors.month}
+              onChange={(v) => setForm({ ...form, month: v })} />
 
             <div className="grid gap-4 sm:grid-cols-2">
-              {["bonus", "deductions"].map((key) => (
-                <Field key={key} label={key === "bonus" ? "Bonus (₹)" : "Deductions (₹)"}>
-                  <input type="number" min="0" required value={form[key]}
-                    onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                    className={inputCls} />
-                </Field>
-              ))}
+              <FormField label="Bonus (₹)" type="number" min="0" step="0.01" inputMode="decimal"
+                value={form.bonus} error={singleErrors.bonus}
+                onChange={(v) => setForm({ ...form, bonus: v })} />
+              <FormField label="Deductions (₹)" type="number" min="0" step="0.01" inputMode="decimal"
+                value={form.deductions} error={singleErrors.deductions}
+                onChange={(v) => setForm({ ...form, deductions: v })} />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={() => setModal(null)} className={btnGhost}>Cancel</button>
-              <button className={btnPrimary}>Generate</button>
+              <button disabled={!singleValid} className={btnPrimary}>Generate</button>
             </div>
           </form>
         </Modal>
@@ -429,7 +447,7 @@ export default function Payroll() {
 
       {modal === "edit" && editing && (
         <Modal title="Edit payslip" onClose={() => setModal(null)}>
-          <form onSubmit={saveEdit} className="space-y-4">
+          <form onSubmit={saveEdit} noValidate className="space-y-4">
             <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
               <Avatar name={editing.employee?.name} />
               <div>
@@ -440,11 +458,9 @@ export default function Payroll() {
 
             <div className="grid gap-4 sm:grid-cols-3">
               {[["basic", "Basic (₹)"], ["bonus", "Bonus (₹)"], ["deductions", "Deductions (₹)"]].map(([key, label]) => (
-                <Field key={key} label={label}>
-                  <input type="number" min="0" required value={editForm[key]}
-                    onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
-                    className={inputCls} />
-                </Field>
+                <FormField key={key} label={label} type="number" min="0" step="0.01" inputMode="decimal"
+                  value={editForm[key]} error={editErrors[key]}
+                  onChange={(v) => setEditForm({ ...editForm, [key]: v })} />
               ))}
             </div>
 
@@ -470,7 +486,7 @@ export default function Payroll() {
 
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={() => setModal(null)} className={btnGhost}>Cancel</button>
-              <button className={btnPrimary}>Save changes</button>
+              <button disabled={!editValid} className={btnPrimary}>Save changes</button>
             </div>
           </form>
         </Modal>
@@ -478,18 +494,16 @@ export default function Payroll() {
 
       {modal === "all" && (
         <Modal title="Generate payroll for all employees" onClose={() => setModal(null)}>
-          <form onSubmit={generateAll} className="space-y-4">
+          <form onSubmit={generateAll} noValidate className="space-y-4">
             <p className="text-sm text-slate-500">
               Creates a payslip for every active employee who doesn't have one yet for the
               chosen month, using their salary as basic pay. Existing payslips are skipped.
             </p>
-            <Field label="Month">
-              <input type="month" required value={bulkMonth}
-                onChange={(e) => setBulkMonth(e.target.value)} className={inputCls} />
-            </Field>
+            <FormField label="Month" type="month" value={bulkMonth} error={bulkError}
+              onChange={setBulkMonth} />
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={() => setModal(null)} className={btnGhost}>Cancel</button>
-              <button className={btnPrimary}>Generate for all</button>
+              <button disabled={!!bulkError} className={btnPrimary}>Generate for all</button>
             </div>
           </form>
         </Modal>

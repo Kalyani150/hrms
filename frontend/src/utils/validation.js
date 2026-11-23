@@ -4,14 +4,14 @@
 export const NAME_REGEX = /^[A-Za-z]+( [A-Za-z]+)*$/;
 export const EMAIL_REGEX = /^[a-zA-Z0-9]+([._-]?[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$/;
 export const PHONE_REGEX = /^\d{10}$/;
-export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,128}$/;
 
 export const MESSAGES = {
   name: "Name should contain only letters",
   nameLength: "Name must be 2 to 50 characters",
   email: "Enter a valid email (e.g. name@gmail.com)",
   phone: "Phone number must be 10 digits",
-  password: "Password must be 8+ characters with uppercase, lowercase, number and symbol"
+  password: "Password must be 8-128 characters with uppercase, lowercase, number and symbol, and no spaces"
 };
 
 /* ---------- keystroke filters (also used to clean pasted text) ---------- */
@@ -22,6 +22,10 @@ export const TEXT_REGEX = /^[A-Za-z][A-Za-z /&.-]*$/;
 export const ALLOW_TEXT_KEY = /[A-Za-z /&.-]/;
 // Email: letters, numbers, @ and only the symbols . _ -  (no spaces or other symbols)
 export const ALLOW_EMAIL_KEY = /[A-Za-z0-9@._-]/;
+
+// Passwords never contain spaces
+export const ALLOW_PASSWORD_KEY = /\S/;
+export const sanitizePassword = (v) => v.replace(/\s/g, "").slice(0, 128);
 
 export const EMAIL_RULES_HINT =
   "Letters, numbers and . _ - before the @, then a domain like gmail.com or company.co.in. No spaces.";
@@ -75,11 +79,39 @@ export function validateText(value = "", label = "This field") {
   return TEXT_REGEX.test(t) ? "" : `${label} should contain only letters`;
 }
 
-export function validateSalary(value) {
-  if (value === "" || value === null || value === undefined) return "Salary is required";
+export const MAX_AMOUNT = 10000000;
+
+// Money amount: required, a number, 0 to 1 crore, at most 2 decimals
+export function validateAmount(value, label = "Amount") {
+  if (value === "" || value === null || value === undefined) return `${label} is required`;
   const n = Number(value);
-  if (Number.isNaN(n)) return "Salary must be a number";
-  return n < 0 ? "Salary cannot be negative" : "";
+  if (Number.isNaN(n)) return `${label} must be a number`;
+  if (n < 0) return `${label} cannot be negative`;
+  if (n > MAX_AMOUNT) return `${label} cannot be more than ${MAX_AMOUNT.toLocaleString("en-IN")}`;
+  return /^\d+(\.\d{1,2})?$/.test(String(value).trim()) ? "" : `${label} can have at most 2 decimal places`;
+}
+
+export const validateSalary = (value) => validateAmount(value, "Salary");
+
+// Deductions cannot be more than basic + bonus
+export function validateDeductions(basic, bonus, deductions) {
+  const base = validateAmount(deductions, "Deductions");
+  if (base) return base;
+  return Number(deductions) > Number(basic || 0) + Number(bonus || 0)
+    ? "Deductions cannot be more than basic pay plus bonus" : "";
+}
+
+export const validateSelect = (value, label = "an option") =>
+  value ? "" : `Please select ${label}`;
+
+export const validateMonth = (value = "") =>
+  /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? "" : "Select a valid month";
+
+// New password must pass the rules and differ from the current one
+export function validateNewPassword(value = "", current = "") {
+  const rules = validatePassword(value);
+  if (rules) return rules;
+  return current && value === current ? "New password must be different from the current password" : "";
 }
 
 export function validateDate(value = "", label = "Date") {

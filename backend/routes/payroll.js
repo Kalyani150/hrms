@@ -4,6 +4,7 @@ const { z } = require("zod");
 const Payroll = require("../models/Payroll");
 const User = require("../models/User");
 const { protect, authorize } = require("../middleware/auth");
+const { amountSchema } = require("../utils/validation");
 
 const router = express.Router();
 
@@ -14,19 +15,21 @@ const month = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Month must be in YYYY
 const createSchema = z.object({
   employee: z.string().refine(mongoose.isValidObjectId, "Invalid employee id"),
   month,
-  basic: z.coerce.number().min(0).optional(), // defaults to the employee's salary
-  bonus: z.coerce.number().min(0).default(0),
-  deductions: z.coerce.number().min(0).default(0)
+  basic: amountSchema("Basic pay").optional(), // defaults to the employee's salary
+  bonus: amountSchema("Bonus").default(0),
+  deductions: amountSchema("Deductions").default(0)
 });
 
 const updateSchema = z.object({
-  basic: z.coerce.number().min(0),
-  bonus: z.coerce.number().min(0),
-  deductions: z.coerce.number().min(0),
+  basic: amountSchema("Basic pay"),
+  bonus: amountSchema("Bonus"),
+  deductions: amountSchema("Deductions"),
   updateSalary: z.boolean() // also save `basic` as the employee's monthly salary
 }).partial();
 
 const generateSchema = z.object({ month });
+
+const DEDUCTION_ERROR = "Deductions cannot be more than basic pay plus bonus";
 
 const net = (basic, bonus, deductions) => Math.max(0, basic + bonus - deductions);
 
@@ -64,6 +67,7 @@ router.post("/", authorize("Admin"), async (req, res, next) => {
   if (!employee) return res.status(404).json({ message: "Employee not found" });
 
   const basic = d.basic ?? employee.salary;
+  if (d.deductions > basic + d.bonus) return res.status(400).json({ message: DEDUCTION_ERROR });
   try {
     const payroll = await Payroll.create({
       employee: employee._id,
@@ -126,6 +130,9 @@ router.put("/:id", authorize("Admin"), checkId, async (req, res) => {
 
   const { updateSalary, ...amounts } = parsed.data;
   payroll.set(amounts);
+  if (payroll.deductions > payroll.basic + payroll.bonus) {
+    return res.status(400).json({ message: DEDUCTION_ERROR });
+  }
   payroll.netSalary = net(payroll.basic, payroll.bonus, payroll.deductions);
   await payroll.save();
 

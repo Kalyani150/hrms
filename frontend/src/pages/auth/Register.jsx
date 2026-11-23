@@ -21,6 +21,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const errors = {
     name: validateName(name),
@@ -32,6 +33,7 @@ export default function Register() {
 
   const submit = async (e) => {
     e.preventDefault();
+    setSubmitted(true);
     if (!formValid) return;
     setLoading(true);
 
@@ -50,21 +52,21 @@ export default function Register() {
     <AuthLayout title="Create your account" subtitle="Register as an employee to get started"
       footer={<>Already have an account? <Link to="/login" className="font-semibold text-blue-600 hover:underline">Sign in</Link></>}>
       <form onSubmit={submit} noValidate className="space-y-5">
-        <FormField label="Full name" value={name} onChange={setName} error={errors.name}
+        <FormField label="Full name" value={name} onChange={setName} error={errors.name} forceShow={submitted}
           sanitize={sanitizeName} allow={ALLOW_NAME_KEY} noDoubleSpace autoComplete="name"
           placeholder="Your full name" leftIcon={<User size={18} />} />
 
         <FormField label="Email" type="email" value={email} onChange={setEmail}
-          error={errors.email} sanitize={sanitizeEmail} allow={ALLOW_EMAIL_KEY} autoComplete="email"
+          error={errors.email} forceShow={submitted} maxLength={254} sanitize={sanitizeEmail} allow={ALLOW_EMAIL_KEY} autoComplete="email"
           placeholder="you@company.com" leftIcon={<Mail size={18} />} />
 
         <PasswordField label="Password" showRules value={password} onChange={setPassword}
-          error={errors.password} autoComplete="new-password" placeholder="Create a password" />
+          error={errors.password} forceShow={submitted} autoComplete="new-password" placeholder="Create a password" />
 
         <PasswordField label="Confirm password" value={confirm} onChange={setConfirm}
-          error={errors.confirm} autoComplete="new-password" placeholder="Re-enter your password" />
+          error={errors.confirm} forceShow={submitted} autoComplete="new-password" placeholder="Re-enter your password" />
 
-        <button disabled={loading || !formValid} className={`${btnPrimary} w-full py-3.5`}>
+        <button disabled={loading} className={`${btnPrimary} w-full py-3.5`}>
           {loading ? "Creating account..." : "Create account"}
         </button>
       </form>

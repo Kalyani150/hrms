@@ -12,11 +12,13 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
 
   const error = validateEmail(email);
 
   const submit = async (e) => {
     e.preventDefault();
+    setSubmitted(true);
     if (error) return;
     setLoading(true);
 
@@ -57,11 +59,11 @@ export default function ForgotPassword() {
     <AuthLayout title="Forgot your password?"
       subtitle="Enter your email and we will send you a link to reset it" footer={back}>
       <form onSubmit={submit} noValidate className="space-y-5">
-        <FormField label="Email" type="email" value={email} onChange={setEmail} error={error}
+        <FormField label="Email" type="email" value={email} onChange={setEmail} error={error} forceShow={submitted} maxLength={254}
           sanitize={sanitizeEmail} allow={ALLOW_EMAIL_KEY} autoComplete="email"
           placeholder="you@company.com" leftIcon={<Mail size={18} />} />
 
-        <button disabled={loading || !!error} className={`${btnPrimary} w-full py-3.5`}>
+        <button disabled={loading} className={`${btnPrimary} w-full py-3.5`}>
           {loading ? "Sending..." : "Send reset link"}
         </button>
       </form>
