@@ -129,5 +129,6 @@ The same rules run in the browser (`frontend/src/utils/validation.js`) and on th
 
 Summary cards sit four in a row, then two by two, then one per row on very narrow phones, based on the
 space available, so a single card is never left on its own line. Employee and payslip cards follow the
-same pattern. Tables turn into one card per row when there is not
-enough room for their columns, so every value and button stays visible without scrolling sideways.
+same pattern. The leave tables (Leaves page and admin dashboard) look the same on every screen size
+and scroll sideways inside their card on small screens. The Attendance, Employees and Payroll tables
+turn into one card per row when there is not enough room for their columns.

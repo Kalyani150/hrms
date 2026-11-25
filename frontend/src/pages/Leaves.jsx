@@ -118,8 +118,8 @@ export default function Leaves() {
           ))}
         </div>
 
-        {/* a table when there is room, one card per request on smaller screens */}
-        <ResponsiveTable stackBelow={760}
+        {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
+        <ResponsiveTable className="min-w-[720px]"
           columns={["Employee", "Type", "Duration", "Reason", "Status"]}>
           {loading ? <SkeletonRows cols={5} /> : shown.map((l) => (
             <tr key={l._id} className="transition hover:bg-slate-50/70">
@@ -134,12 +134,12 @@ export default function Leaves() {
                   </div>
                 </div>
               </td>
-              <td className={`${cell} whitespace-nowrap`} data-label="Type">
+              <td className={`${cell} whitespace-nowrap`}>
                 <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${typeTone[l.type] || typeTone.Other}`}>
                   {l.type}
                 </span>
               </td>
-              <td className={`${cell} whitespace-nowrap`} data-label="Duration">
+              <td className={`${cell} whitespace-nowrap`}>
                 <div>
                   <p className="font-medium text-slate-800">
                     {l.startDate === l.endDate ? fmt(l.startDate) : `${fmt(l.startDate)} → ${fmt(l.endDate)}`}
@@ -149,10 +149,10 @@ export default function Leaves() {
                   </p>
                 </div>
               </td>
-              <td className={`${cell} w-1/3`} data-label="Reason" data-wide>
+              <td className={`${cell} w-1/3`}>
                 <ExpandableText text={l.reason} empty="No reason provided" className="min-w-48" />
               </td>
-              <td className={cell} data-label="Status"><Badge value={l.status} /></td>
+              <td className={cell}><Badge value={l.status} /></td>
             </tr>
           ))}
           {!loading && shown.length === 0 && <EmptyRow cols={5} text="No leave requests found" />}
