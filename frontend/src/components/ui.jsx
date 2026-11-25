@@ -38,8 +38,9 @@ export function CardRow({ className = "", children }) {
 }
 
 /* A normal table while its container is at least `stackBelow` pixels wide, otherwise one card per row.
+   Without `stackBelow` it stays a table and scrolls sideways when narrow.
    In card form each cell is labelled by its data-label; see .table-stacked in index.css. */
-export function ResponsiveTable({ columns, stackBelow, className = "", children }) {
+export function ResponsiveTable({ columns, stackBelow = 0, className = "", children }) {
   const ref = useRef(null);
   const [stacked, setStacked] = useState(false);
 

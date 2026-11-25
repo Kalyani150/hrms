@@ -91,8 +91,8 @@ export default function AdminDashboard({ user, data, reload }) {
         <div className="space-y-6 xl:col-span-2">
         <Card className="overflow-hidden">
           <div className="p-4 sm:p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
-          {/* a table when there is room, one card per request on smaller screens */}
-          <ResponsiveTable stackBelow={640} className="leave-cards"
+          {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
+          <ResponsiveTable className="min-w-[640px]"
             columns={["Employee", "Leave & Reason", "Date", "Status", "Action"]}>
             {data.recentLeaves.map((l) => (
               <tr key={l._id} className="hover:bg-slate-50/70">
@@ -102,20 +102,20 @@ export default function AdminDashboard({ user, data, reload }) {
                     <span className="font-medium text-slate-800">{l.employee?.name}</span>
                   </div>
                 </td>
-                <td className={`${cell} w-2/5`} data-label="Leave & Reason" data-wide>
+                <td className={`${cell} w-2/5`}>
                   <div className="min-w-28">
                     <p className="font-medium text-slate-800">{l.type}</p>
                     <ExpandableText text={l.reason} empty="No reason provided" className="mt-0.5 text-xs text-slate-500" />
                   </div>
                 </td>
-                <td className={`${cell} whitespace-nowrap`} data-label="Date">
+                <td className={`${cell} whitespace-nowrap`}>
                   {l.startDate === l.endDate
                     ? short(l.startDate)
                     : `${short(l.startDate)} – ${short(l.endDate)}`}
                 </td>
-                <td className={cell} data-label="Status"><Badge value={l.status} /></td>
+                <td className={cell}><Badge value={l.status} /></td>
                 {l.status === "Pending" ? (
-                  <td className={cell} data-label="Action">
+                  <td className={cell}>
                     <div className="flex gap-2">
                       <button onClick={() => review(l._id, "Approved")} title="Approve" aria-label="Approve"
                         className="rounded-lg bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100">
@@ -128,7 +128,7 @@ export default function AdminDashboard({ user, data, reload }) {
                     </div>
                   </td>
                 ) : (
-                  <td className={cell} data-empty><span className="text-slate-300">—</span></td>
+                  <td className={cell}><span className="text-slate-300">—</span></td>
                 )}
               </tr>
             ))}
