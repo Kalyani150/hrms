@@ -31,7 +31,19 @@ const userSchema = new mongoose.Schema({
     enum: ["Active", "Inactive"],
     default: "Active"
   }
-}, { timestamps: true });
+}, {
+  timestamps: true,
+  toJSON: {
+    // Secrets never leave the server. `select: false` only covers queries: a document that was just
+    // created, or had its password changed, still holds the hash in memory.
+    transform(doc, ret) {
+      delete ret.password;
+      delete ret.resetTokenHash;
+      delete ret.resetTokenExpires;
+      return ret;
+    }
+  }
+});
 
 userSchema.pre("save", async function () {
   if (this.isModified("password")) {

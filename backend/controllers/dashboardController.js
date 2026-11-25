@@ -5,6 +5,7 @@ const Payroll = require("../models/Payroll");
 
 const TIME_ZONE = "Asia/Kolkata";
 const LEAVE_ALLOWANCE = Number(process.env.LEAVE_ALLOWANCE) || 20; // days per year
+const LEAVE_ROWS = 8; // admin leave table: at least this many rows when there is enough history
 
 const todayKey = () =>
   new Intl.DateTimeFormat("en-CA", {
@@ -125,7 +126,8 @@ async function getDashboard(req, res, next) {
       approvedLeaves,
       departments,
       recentEmployees,
-      recentLeaves,
+      pendingRequests,
+      reviewedRequests,
       payrollByStatus,
       trendRows,
       departmentRows
@@ -136,10 +138,14 @@ async function getDashboard(req, res, next) {
       Leave.countDocuments({ status: "Approved" }),
       User.distinct("department", { role: "Employee" }),
       User.find({ role: "Employee" }).sort({ createdAt: -1 }).limit(5),
-      Leave.find()
+      // Every pending request: the dashboard is where they are approved, so none may be left out
+      Leave.find({ status: "Pending" })
+        .populate("employee", "name department designation")
+        .sort({ createdAt: -1 }),
+      Leave.find({ status: { $ne: "Pending" } })
         .populate("employee", "name department designation")
         .sort({ createdAt: -1 })
-        .limit(8),
+        .limit(LEAVE_ROWS),
       Payroll.aggregate([
         { $match: { month } },
         { $group: { _id: "$status", total: { $sum: "$netSalary" }, count: { $sum: 1 } } }
@@ -154,6 +160,12 @@ async function getDashboard(req, res, next) {
         { $sort: { count: -1 } }
       ])
     ]);
+
+    // Pending first; recently reviewed requests only fill the rows that are left
+    const recentLeaves = [
+      ...pendingRequests,
+      ...reviewedRequests.slice(0, Math.max(0, LEAVE_ROWS - pendingRequests.length))
+    ];
 
     const attendanceTrend = weekdays.map((d) => {
       const count = (s) =>

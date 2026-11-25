@@ -21,7 +21,7 @@ push to `main` (see `DEPLOYMENT.md`).
 | Dashboard | Totals, present today, pending/approved leaves, departments, payroll overview, recent employees, attendance trend | Profile card, today's check-in status, recent attendance, leave requests, latest payslip |
 | Employees | Add, edit, deactivate / reactivate, search, filter by department and status, sort | View and edit own profile (name, phone, address), change password |
 | Attendance | See everyone's records, filter by date | Check in / check out (Present or Late), own history |
-| Leave | See all requests and filter by status; approve or reject recent requests from the dashboard | Apply (Sick, Casual, Annual, Other), own history |
+| Leave | See all requests and filter by status; approve or reject pending requests from the dashboard | Apply (Sick, Casual, Annual, Other), own history |
 | Payroll | Generate for one or all employees, edit amounts of pending payslips, mark as paid, print payslips | View and print own payslips |
 
 Salary rule: `Net salary = Basic + Bonus - Deductions` (never below 0).
