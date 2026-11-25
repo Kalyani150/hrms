@@ -13,7 +13,7 @@ import {
 } from "../components/ui";
 import FormField from "../components/FormField";
 import {
-  validateAmount, validateDeductions, validateSelect, validateMonth, isValid
+  validateAmount, validateDeductions, validateSelect, validateMonth, isValid, MAX_AMOUNT
 } from "../utils/validation";
 
 const PAGE_SIZE = 4; // payslips per page
@@ -104,7 +104,10 @@ export default function Payroll() {
 
   const selectedEmployee = employees.find((e) => e._id === form.employee);
   const singleErrors = {
-    employee: validateSelect(form.employee, "an employee"),
+    employee: validateSelect(form.employee, "an employee") ||
+      (selectedEmployee?.salary > MAX_AMOUNT
+        ? `Salary is more than ${MAX_AMOUNT.toLocaleString("en-IN")}. Edit the employee's salary first.`
+        : ""),
     month: validateMonth(form.month),
     bonus: validateAmount(form.bonus, "Bonus"),
     deductions: validateDeductions(selectedEmployee?.salary, form.bonus, form.deductions)
@@ -462,7 +465,7 @@ export default function Payroll() {
             <div className="grid gap-4 sm:grid-cols-3">
               {[["basic", "Basic (₹)"], ["bonus", "Bonus (₹)"], ["deductions", "Deductions (₹)"]].map(([key, label]) => (
                 <FormField key={key} label={label} type="number" min="0" step="0.01" inputMode="decimal"
-                  value={editForm[key]} error={editErrors[key]}
+                  value={editForm[key]} error={editErrors[key]} forceShow
                   onChange={(v) => setEditForm({ ...editForm, [key]: v })} />
               ))}
             </div>

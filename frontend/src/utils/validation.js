@@ -28,9 +28,6 @@ export const PASSWORD_SYMBOLS = "! @ # $ % & * _ -";
 export const ALLOW_PASSWORD_KEY = /[A-Za-z0-9!@#$%&*_\-]/;
 export const sanitizePassword = (v) => v.replace(/[^A-Za-z0-9!@#$%&*_\-]/g, "").slice(0, 128);
 
-export const EMAIL_RULES_HINT =
-  "Letters, numbers and . _ - before the @, then a domain like gmail.com or company.co.in. No spaces.";
-
 export const sanitizeName = (v) =>
   v.replace(/[^A-Za-z ]/g, "").replace(/^ +/, "").replace(/ {2,}/g, " ").slice(0, 50);
 
@@ -80,9 +77,9 @@ export function validateText(value = "", label = "This field") {
   return TEXT_REGEX.test(t) ? "" : `${label} should contain only letters`;
 }
 
-export const MAX_AMOUNT = 10000000;
+export const MAX_AMOUNT = 999999; // below 10 lakh
 
-// Money amount: required, a number, 0 to 1 crore, at most 2 decimals
+// Money amount: required, a number, 0 to MAX_AMOUNT, at most 2 decimals
 export function validateAmount(value, label = "Amount") {
   if (value === "" || value === null || value === undefined) return `${label} is required`;
   const n = Number(value);

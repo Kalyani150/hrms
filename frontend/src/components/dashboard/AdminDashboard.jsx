@@ -92,7 +92,7 @@ export default function AdminDashboard({ user, data, reload }) {
         <Card className="overflow-hidden">
           <div className="p-4 sm:p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
           {/* a table when there is room, one card per request on smaller screens */}
-          <ResponsiveTable stackBelow={640}
+          <ResponsiveTable stackBelow={640} className="leave-cards"
             columns={["Employee", "Leave & Reason", "Date", "Status", "Action"]}>
             {data.recentLeaves.map((l) => (
               <tr key={l._id} className="hover:bg-slate-50/70">
@@ -103,7 +103,7 @@ export default function AdminDashboard({ user, data, reload }) {
                   </div>
                 </td>
                 <td className={`${cell} w-2/5`} data-label="Leave & Reason" data-wide>
-                  <div className="min-w-36">
+                  <div className="min-w-28">
                     <p className="font-medium text-slate-800">{l.type}</p>
                     <ExpandableText text={l.reason} empty="No reason provided" className="mt-0.5 text-xs text-slate-500" />
                   </div>

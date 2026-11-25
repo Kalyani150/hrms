@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { z } = require("zod");
 const Payroll = require("../models/Payroll");
 const User = require("../models/User");
-const { amountSchema } = require("../utils/validation");
+const { amountSchema, MAX_AMOUNT } = require("../utils/validation");
 
 const month = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Month must be in YYYY-MM format");
 
@@ -52,6 +52,12 @@ async function createPayroll(req, res, next) {
   if (!employee) return res.status(404).json({ message: "Employee not found" });
 
   const basic = d.basic ?? employee.salary;
+  // a salary saved before the current limit must not go onto a new payslip
+  if (basic > MAX_AMOUNT) {
+    return res.status(400).json({
+      message: `Basic pay cannot be more than ${MAX_AMOUNT.toLocaleString("en-IN")}. Update the employee's salary first.`
+    });
+  }
   if (d.deductions > basic + d.bonus) return res.status(400).json({ message: DEDUCTION_ERROR });
   try {
     const payroll = await Payroll.create({

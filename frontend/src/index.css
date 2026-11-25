@@ -72,6 +72,28 @@ body::-webkit-scrollbar,
 /* nothing to show, e.g. no actions for this row */
 .table-stacked td[data-empty] { display: none; }
 
+/* Dashboard leave requests in card form: no column labels, laid out as
+     name ............ status
+     leave type and reason
+     date ............ approve / reject */
+.table-stacked.leave-cards tbody { gap: 0.625rem; }
+.table-stacked.leave-cards tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "who status" "leave leave" "date action";
+  align-items: center;
+  gap: 0.625rem 0.75rem;
+}
+.table-stacked.leave-cards td[data-label] { display: block; text-align: left; }
+.table-stacked.leave-cards td[data-label]::before { content: none; }
+.table-stacked.leave-cards td:nth-child(1) { grid-area: who; }
+.table-stacked.leave-cards td:nth-child(2) { grid-area: leave; }
+.table-stacked.leave-cards td:nth-child(3) { grid-area: date; color: var(--color-slate-500); }
+.table-stacked.leave-cards td:nth-child(4) { grid-area: status; justify-self: end; }
+.table-stacked.leave-cards td:nth-child(5) { grid-area: action; justify-self: end; }
+.table-stacked.leave-cards button { padding: 0.5rem 1rem; } /* easier to tap */
+.table-stacked.leave-cards tr:has(td[colspan]) { display: block; }
+
 /* Payslip printing: the payslip lives outside #root and is only shown on paper */
 #payslip-print { display: none; }
 

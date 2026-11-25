@@ -37,8 +37,8 @@ const phoneSchema = z.string().trim().regex(/^$|^\d{10}$/, MESSAGES.phone);
 // Password: 8+ characters with upper, lower, number and special character
 const passwordSchema = z.string().regex(PASSWORD_REGEX, MESSAGES.password);
 
-// Money amounts (salary, bonus, deductions): 0 to 1 crore, at most 2 decimals
-const MAX_AMOUNT = 10000000;
+// Money amounts (salary, basic pay, bonus, deductions): 0 to 9,99,999 (below 10 lakh), at most 2 decimals
+const MAX_AMOUNT = 999999;
 const amountSchema = (label) =>
   z.coerce
     .number(`${label} must be a number`)

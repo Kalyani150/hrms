@@ -39,7 +39,7 @@ export function CardRow({ className = "", children }) {
 
 /* A normal table while its container is at least `stackBelow` pixels wide, otherwise one card per row.
    In card form each cell is labelled by its data-label; see .table-stacked in index.css. */
-export function ResponsiveTable({ columns, stackBelow, children }) {
+export function ResponsiveTable({ columns, stackBelow, className = "", children }) {
   const ref = useRef(null);
   const [stacked, setStacked] = useState(false);
 
@@ -54,7 +54,7 @@ export function ResponsiveTable({ columns, stackBelow, children }) {
 
   return (
     <div ref={ref} className="overflow-x-auto">
-      <table className={`w-full text-left ${stacked ? "table-stacked" : ""}`}>
+      <table className={`w-full text-left ${className} ${stacked ? "table-stacked" : ""}`}>
         <thead className="bg-slate-50">
           <tr>
             {columns.map((h) =>

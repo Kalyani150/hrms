@@ -15,7 +15,7 @@ import {
   validateName, validateEmail, validatePhone, validatePassword, validateText,
   validateSalary, validateDate, validateAddress, sanitizeName, sanitizePhone,
   sanitizeEmail, normalizePhone, isValid, ALLOW_NAME_KEY, ALLOW_PHONE_KEY,
-  ALLOW_EMAIL_KEY, EMAIL_RULES_HINT, ALLOW_TEXT_KEY, sanitizeText
+  ALLOW_EMAIL_KEY, ALLOW_TEXT_KEY, sanitizeText
 } from "../utils/validation";
 
 // Choices in the Add / Edit form's Department dropdown (departments already in use are added too)
@@ -366,7 +366,7 @@ export default function Employees() {
               <FormField label="Email" type="email" value={form.email} error={errors.email}
                 onChange={(v) => setForm({ ...form, email: v })}
                 sanitize={sanitizeEmail} allow={ALLOW_EMAIL_KEY}
-                placeholder="name@gmail.com" hint={EMAIL_RULES_HINT} />
+                placeholder="name@gmail.com" />
 
               <FormField label="Phone (optional)" type="tel" inputMode="numeric"
                 value={form.phone} error={errors.phone}
@@ -386,7 +386,7 @@ export default function Employees() {
                 placeholder="e.g. Software Engineer" />
 
               <FormField label="Salary" type="number" min="0" value={form.salary}
-                error={errors.salary}
+                error={errors.salary} forceShow={!!editing}
                 onChange={(v) => setForm({ ...form, salary: v })} />
 
               <FormField label="Joining Date" type="date" value={form.joiningDate}
