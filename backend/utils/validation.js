@@ -31,8 +31,8 @@ const emailSchema = z
   .max(254, MESSAGES.email)
   .regex(EMAIL_REGEX, MESSAGES.email);
 
-// Phone is optional: empty is allowed, otherwise exactly 10 digits
-const phoneSchema = z.string().trim().regex(/^$|^\d{10}$/, MESSAGES.phone);
+// Phone is required: exactly 10 digits
+const phoneSchema = z.string(MESSAGES.phone).trim().regex(PHONE_REGEX, MESSAGES.phone);
 
 // Password: 8+ characters with upper, lower, number and special character
 const passwordSchema = z.string().regex(PASSWORD_REGEX, MESSAGES.password);

@@ -143,7 +143,7 @@ export default function Profile() {
                 className="cursor-not-allowed! bg-slate-50 text-slate-500"
                 hint="Your email is managed by HR and can't be changed here" />
               <FormField label="Phone" type="tel" inputMode="numeric" value={form.phone}
-                error={profileErrors.phone} onChange={(v) => setForm({ ...form, phone: v })}
+                error={profileErrors.phone} forceShow onChange={(v) => setForm({ ...form, phone: v })}
                 sanitize={sanitizePhone} allow={ALLOW_PHONE_KEY} maxLength={10}
                 placeholder="10 digits" />
               <FormField label="Address" as="textarea" rows={3} maxLength={300}

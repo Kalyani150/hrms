@@ -22,7 +22,7 @@ const createSchema = z.object({
   ...baseFields,
   password: passwordSchema
 }).partial({
-  role: true, department: true, designation: true, phone: true, address: true,
+  role: true, department: true, designation: true, address: true,
   salary: true, joiningDate: true, status: true
 });
 

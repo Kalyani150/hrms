@@ -369,8 +369,8 @@ export default function Employees() {
                 sanitize={sanitizeEmail} allow={ALLOW_EMAIL_KEY}
                 placeholder="name@gmail.com" />
 
-              <FormField label="Phone (optional)" type="tel" inputMode="numeric"
-                value={form.phone} error={errors.phone}
+              <FormField label="Phone" type="tel" inputMode="numeric"
+                value={form.phone} error={errors.phone} forceShow={!!editing}
                 onChange={(v) => setForm({ ...form, phone: v })}
                 sanitize={sanitizePhone} allow={ALLOW_PHONE_KEY}
                 maxLength={10} placeholder="10 digits" />

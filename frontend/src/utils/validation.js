@@ -58,9 +58,9 @@ export function validateEmail(value = "") {
   return EMAIL_REGEX.test(t) ? "" : MESSAGES.email;
 }
 
-// Phone is optional unless { required: true }
-export function validatePhone(value = "", { required = false } = {}) {
-  if (!value) return required ? MESSAGES.phone : "";
+// Phone is required: exactly 10 digits
+export function validatePhone(value = "") {
+  if (!value) return "Phone number is required";
   return PHONE_REGEX.test(value) ? "" : MESSAGES.phone;
 }
 
