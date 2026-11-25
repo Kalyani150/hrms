@@ -57,7 +57,14 @@ const textSchema = (label) =>
     .max(50, `${label} must be 2 to 50 characters`)
     .regex(TEXT_REGEX, `${label} should contain only letters`);
 
+// Today as YYYY-MM-DD in India time (the timezone attendance and the dashboard use)
+const todayKey = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit"
+  }).format(new Date());
+
 module.exports = {
+  todayKey,
   NAME_REGEX,
   EMAIL_REGEX,
   PHONE_REGEX,

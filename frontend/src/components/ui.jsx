@@ -1,10 +1,12 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { X, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 
 /* ---------- shared class names ---------- */
 export const inputCls =
-  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm " +
+  // 16px text on phones stops iOS Safari zooming in when a field is focused
+  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base sm:text-sm " +
   "text-slate-800 outline-none transition placeholder:text-slate-400 " +
   "focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
@@ -22,6 +24,67 @@ export const btnGhost =
 export const th =
   "px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500";
 export const td = "px-5 py-4 text-sm text-slate-700";
+// Narrower cells for ResponsiveTable, so more columns fit before it has to switch to cards
+export const cell = "px-3 py-3.5 text-sm text-slate-700 xl:px-4";
+
+/* A row of equal cards. The column classes are chosen by the space actually available (@... variants),
+   so four cards sit in one row or split 2 x 2, and never leave a single card on its own line. */
+export function CardRow({ className = "", children }) {
+  return (
+    <div className="@container">
+      <div className={`grid grid-cols-1 gap-3 sm:gap-5 ${className}`}>{children}</div>
+    </div>
+  );
+}
+
+/* A normal table while its container is at least `stackBelow` pixels wide, otherwise one card per row.
+   In card form each cell is labelled by its data-label; see .table-stacked in index.css. */
+export function ResponsiveTable({ columns, stackBelow, children }) {
+  const ref = useRef(null);
+  const [stacked, setStacked] = useState(false);
+
+  useLayoutEffect(() => {
+    const box = ref.current;
+    const check = () => setStacked(box.clientWidth < stackBelow);
+    check(); // before the first paint, so the layout does not jump
+    const observer = new ResizeObserver(check);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [stackBelow]);
+
+  return (
+    <div ref={ref} className="overflow-x-auto">
+      <table className={`w-full text-left ${stacked ? "table-stacked" : ""}`}>
+        <thead className="bg-slate-50">
+          <tr>
+            {columns.map((h) =>
+              <th key={h} className="whitespace-nowrap px-3 py-3.5 text-xs font-semibold uppercase
+                tracking-wide text-slate-500 xl:px-4">{h}</th>)}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">{children}</tbody>
+      </table>
+    </div>
+  );
+}
+
+const PREVIEW_LENGTH = 20; // characters of a collapsed leave reason
+
+/* A leave reason; long words wrap instead of widening the layout. With `collapsible`, only the start of
+   it is shown until the text is double-clicked; double-clicking again shortens it (nothing on hover). */
+export function LeaveReason({ text, className = "", collapsible = false }) {
+  const [open, setOpen] = useState(false);
+  const long = collapsible && (text || "").length > PREVIEW_LENGTH;
+  const shown = long && !open ? `${text.slice(0, PREVIEW_LENGTH).trimEnd()}…` : text;
+
+  return (
+    // touch-manipulation: a double tap on a phone reaches the text instead of zooming the page
+    <p onDoubleClick={long ? () => setOpen(!open) : undefined}
+      className={`[overflow-wrap:anywhere] ${long ? "cursor-pointer touch-manipulation select-none" : ""} ${className}`}>
+      {shown || <span className="text-slate-400">No reason provided</span>}
+    </p>
+  );
+}
 
 /* ---------- building blocks ---------- */
 export function PageHeader({ title, subtitle, children }) {
@@ -57,25 +120,30 @@ const tiles = {
 export function StatCard({ label, value, hint, Icon, tone = "blue", to, onClick, active }) {
   const clickable = !!(to || onClick);
   const card = (
-    <Card className={`p-0 transition hover:-translate-y-0.5 hover:shadow-md ${
+    // h-full + flex: cards in a row are the same height and their footers line up
+    <Card className={`@container flex h-full flex-col p-0 transition hover:-translate-y-0.5 hover:shadow-md ${
       clickable ? "cursor-pointer hover:border-blue-200" : ""} ${
       active ? "border-blue-400 ring-4 ring-blue-100" : ""}`}>
-      <div className="flex items-start justify-between gap-2 p-4 sm:p-5">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-500 sm:text-sm">{label}</p>
-          <p className="mt-1.5 text-lg font-bold tracking-tight text-slate-800 [overflow-wrap:anywhere] sm:mt-2 sm:text-2xl 2xl:text-3xl">
-            {value}
-          </p>
-        </div>
-        <span className={`shrink-0 rounded-xl bg-linear-to-br p-2 text-white shadow-lg sm:rounded-2xl sm:p-3 ${tiles[tone]}`}>
+      {/* In a narrow card the value gets the full width under the label and icon */}
+      <div className="grid flex-1 grid-cols-[minmax(0,1fr)_auto] content-start gap-x-2 p-4 sm:p-5">
+        <p className="col-start-1 row-start-1 text-xs font-medium text-slate-500 sm:text-sm">{label}</p>
+        <span className={`col-start-2 row-start-1 self-start rounded-xl bg-linear-to-br p-2 text-white shadow-lg @min-[14rem]:row-span-2 sm:rounded-2xl sm:p-3 ${tiles[tone]}`}>
           <Icon className="h-[18px] w-[18px] sm:h-[22px] sm:w-[22px]" />
         </span>
+        <p className={`col-start-1 row-start-2 mt-1.5 font-bold tracking-tight text-slate-800 [overflow-wrap:anywhere] @max-[14rem]:col-span-2 sm:mt-2 ${
+          // long values (large amounts) shrink with the card instead of breaking mid-number
+          String(value).length > 8
+            ? "text-[length:clamp(1rem,10cqi,1.5rem)] 2xl:text-[length:clamp(1rem,10cqi,1.875rem)]"
+            : "text-lg sm:text-2xl 2xl:text-3xl"
+        }`}>
+          {value}
+        </p>
       </div>
       <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-4 py-2.5 text-[11px] text-slate-500 sm:px-5 sm:py-3 sm:text-xs">
         <span className="min-w-0 [overflow-wrap:anywhere]">{hint}</span>
         {to && (
           <span className="flex shrink-0 items-center gap-1 font-medium text-blue-600">
-            <span className="hidden min-[400px]:inline">Details</span> <ArrowRight size={13} />
+            <span className="hidden @min-[14rem]:inline">Details</span> <ArrowRight size={13} />
           </span>
         )}
       </div>
@@ -85,7 +153,7 @@ export function StatCard({ label, value, hint, Icon, tone = "blue", to, onClick,
   // The whole card is the link / button
   if (to) {
     return (
-      <Link to={to} className="block rounded-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
+      <Link to={to} className="block h-full rounded-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
         {card}
       </Link>
     );
@@ -218,7 +286,7 @@ export function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center
       bg-slate-900/50 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl
+      <div className="max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded-2xl
         bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b
           border-slate-100 px-6 py-4">

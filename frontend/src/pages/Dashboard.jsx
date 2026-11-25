@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import AdminDashboard from "../components/dashboard/AdminDashboard";
 import EmployeeDashboard from "../components/dashboard/EmployeeDashboard";
+import { CardRow } from "../components/ui";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -21,11 +22,11 @@ export default function Dashboard() {
     return (
       <div className="space-y-6">
         <div className="h-44 animate-pulse rounded-3xl bg-slate-200" />
-        <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+        <CardRow className="min-[340px]:grid-cols-2 @2xl:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200" />
           ))}
-        </div>
+        </CardRow>
       </div>
     );
   }

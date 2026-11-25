@@ -11,7 +11,8 @@ import {
   validateEmail, sanitizeEmail, isValid, ALLOW_EMAIL_KEY
 } from "../../utils/validation";
 
-// One page, two sign-ins: /login is for employees, /admin/login is for administrators
+// One page, two sign-ins: /login is for employees, /admin/login is for administrators.
+// The employee page deliberately does not link to the admin one: administrators open its address directly.
 export default function Login({ portal = "employee" }) {
   const isAdmin = portal === "admin";
   const { login } = useAuth();
@@ -53,10 +54,7 @@ export default function Login({ portal = "employee" }) {
       subtitle={isAdmin ? "Sign in with your administrator account" : "Sign in to your employee account to continue"}
       footer={isAdmin
         ? <>Not an admin? <Link to="/login" className="font-semibold text-blue-600 hover:underline">Employee sign in</Link></>
-        : <>
-            <span className="block">New here? <Link to="/register" className="font-semibold text-blue-600 hover:underline">Create an account</Link></span>
-            <span className="mt-2 block">Administrator? <Link to="/admin/login" className="font-semibold text-blue-600 hover:underline">Admin sign in</Link></span>
-          </>}>
+        : <>New here? <Link to="/register" className="font-semibold text-blue-600 hover:underline">Create an account</Link></>}>
       <form onSubmit={submit} noValidate className="space-y-5">
         <FormField label="Email" type="email" value={email} onChange={setEmail}
           error={errors.email} forceShow={submitted} maxLength={254} sanitize={sanitizeEmail} allow={ALLOW_EMAIL_KEY} autoComplete="email"

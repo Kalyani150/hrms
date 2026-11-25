@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { Plus, Check, X, Hourglass, CircleCheck, CircleX, CalendarRange } from "lucide-react";
+import { Plus, Hourglass, CircleCheck, CircleX, CalendarRange } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, Field, Modal, StatCard,
-  inputCls, btnPrimary, btnGhost, th, td
+  ResponsiveTable, LeaveReason, CardRow, inputCls, btnPrimary, btnGhost, cell
 } from "../components/ui";
 import FormField from "../components/FormField";
 import {
-  validateDate, validateEndDate, validateReason, sanitizeReason, ALLOW_REASON_KEY, isValid
+  validateStartDate, validateEndDate, validateReason, sanitizeReason, todayKey, ALLOW_REASON_KEY, isValid
 } from "../utils/validation";
 
 const blank = { type: "Sick Leave", startDate: "", endDate: "", reason: "" };
@@ -49,8 +49,9 @@ export default function Leaves() {
 
   useEffect(() => { load(); }, []);
 
+  const today = todayKey(); // earliest date that can be picked
   const errors = {
-    startDate: validateDate(form.startDate, "Start date"),
+    startDate: validateStartDate(form.startDate),
     endDate: validateEndDate(form.startDate, form.endDate),
     reason: validateReason(form.reason)
   };
@@ -71,16 +72,6 @@ export default function Leaves() {
     }
   };
 
-  const update = async (id, status) => {
-    try {
-      await api.patch(`/leaves/${id}/status`, { status });
-      toast.success(`Leave ${status.toLowerCase()}`);
-      load();
-    } catch {
-      toast.error("Unable to update leave");
-    }
-  };
-
   const count = (s) => leaves.filter((l) => l.status === s).length;
   const approvedDays = leaves
     .filter((l) => l.status === "Approved")
@@ -93,7 +84,7 @@ export default function Leaves() {
     <div className="space-y-6">
       <PageHeader title="Leave Management"
         subtitle={user.role === "Admin"
-          ? "Review and approve leave requests"
+          ? "All leave requests from employees"
           : "Apply for leave and track your requests"}>
         {user.role === "Employee" && (
           <button onClick={() => setShowForm(true)} className={btnPrimary}>
@@ -102,16 +93,16 @@ export default function Leaves() {
         )}
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <CardRow className="min-[400px]:grid-cols-2 @2xl:grid-cols-4">
         <StatCard label="Pending" value={count("Pending")} Icon={Hourglass} tone="amber"
-          hint={user.role === "Admin" ? "Waiting for your review" : "Waiting for approval"} />
+          hint="Waiting for approval" />
         <StatCard label="Approved" value={count("Approved")} Icon={CircleCheck} tone="green"
           hint={`${approvedDays} day${approvedDays === 1 ? "" : "s"} in total`} />
         <StatCard label="Rejected" value={count("Rejected")} Icon={CircleX} tone="rose"
           hint="Declined requests" />
         <StatCard label="All Requests" value={leaves.length} Icon={CalendarRange} tone="blue"
           hint="Every request so far" />
-      </div>
+      </CardRow>
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap gap-2 border-b border-slate-100 p-4">
@@ -127,69 +118,45 @@ export default function Leaves() {
           ))}
         </div>
 
-        {/* scrolls sideways inside the card on small screens */}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] sm:min-w-[900px] text-left">
-            <thead className="bg-slate-50">
-              <tr>
-                {["Employee", "Type", "Duration", "Reason", "Status", "Actions"].map((h) =>
-                  <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? <SkeletonRows cols={6} /> : shown.map((l) => (
-                <tr key={l._id} className="transition hover:bg-slate-50/70">
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                    <div className="flex items-center gap-3">
-                      <Avatar name={l.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
-                      <div>
-                        <p className="font-medium text-slate-800">{l.employee?.name}</p>
-                        {l.employee?.department && (
-                          <p className="text-xs text-slate-500">{l.employee.department}</p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                    <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${typeTone[l.type] || typeTone.Other}`}>
-                      {l.type}
-                    </span>
-                  </td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                    <p className="font-medium text-slate-800">
-                      {l.startDate === l.endDate ? fmt(l.startDate) : `${fmt(l.startDate)} → ${fmt(l.endDate)}`}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {days(l.startDate, l.endDate)} day{days(l.startDate, l.endDate) === 1 ? "" : "s"}
-                    </p>
-                  </td>
-                  <td className={`${td} max-w-[180px] px-3! py-3! sm:max-w-[260px] sm:px-5! sm:py-4!`}>
-                    <p className="truncate" title={l.reason}>{l.reason}</p>
-                  </td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={l.status} /></td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                    {user.role === "Admin" && l.status === "Pending" ? (
-                      <div className="flex gap-2">
-                        <button onClick={() => update(l._id, "Approved")}
-                          className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5
-                          text-xs font-medium text-emerald-700 hover:bg-emerald-100">
-                          <Check size={14} /> Approve
-                        </button>
-                        <button onClick={() => update(l._id, "Rejected")}
-                          className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5
-                          text-xs font-medium text-rose-700 hover:bg-rose-100">
-                          <X size={14} /> Reject
-                        </button>
-                      </div>
-                    ) : <span className="text-slate-300">—</span>}
-                  </td>
-                </tr>
-              ))}
-              {!loading && shown.length === 0 && <EmptyRow cols={6} text="No leave requests found" />}
-            </tbody>
-          </table>
-        </div>
+        {/* a table when there is room, one card per request on smaller screens */}
+        <ResponsiveTable stackBelow={760}
+          columns={["Employee", "Type", "Duration", "Reason", "Status"]}>
+          {loading ? <SkeletonRows cols={5} /> : shown.map((l) => (
+            <tr key={l._id} className="transition hover:bg-slate-50/70">
+              <td className={cell}>
+                <div className="flex items-center gap-3">
+                  <Avatar name={l.employee?.name} size="h-9 w-9 text-xs" />
+                  <div className="min-w-32">
+                    <p className="font-medium text-slate-800">{l.employee?.name}</p>
+                    {l.employee?.department && (
+                      <p className="text-xs text-slate-500">{l.employee.department}</p>
+                    )}
+                  </div>
+                </div>
+              </td>
+              <td className={`${cell} whitespace-nowrap`} data-label="Type">
+                <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${typeTone[l.type] || typeTone.Other}`}>
+                  {l.type}
+                </span>
+              </td>
+              <td className={`${cell} whitespace-nowrap`} data-label="Duration">
+                <div>
+                  <p className="font-medium text-slate-800">
+                    {l.startDate === l.endDate ? fmt(l.startDate) : `${fmt(l.startDate)} → ${fmt(l.endDate)}`}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {days(l.startDate, l.endDate)} day{days(l.startDate, l.endDate) === 1 ? "" : "s"}
+                  </p>
+                </div>
+              </td>
+              <td className={`${cell} w-1/3`} data-label="Reason" data-wide>
+                <LeaveReason text={l.reason} className="min-w-48" collapsible />
+              </td>
+              <td className={cell} data-label="Status"><Badge value={l.status} /></td>
+            </tr>
+          ))}
+          {!loading && shown.length === 0 && <EmptyRow cols={5} text="No leave requests found" />}
+        </ResponsiveTable>
       </Card>
 
       {showForm && (
@@ -206,10 +173,11 @@ export default function Leaves() {
             </Field>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Start date" type="date" value={form.startDate}
+              <FormField label="Start date" type="date" min={today} value={form.startDate}
                 error={errors.startDate}
                 onChange={(v) => setForm({ ...form, startDate: v })} />
-              <FormField label="End date" type="date" min={form.startDate} value={form.endDate}
+              <FormField label="End date" type="date" value={form.endDate}
+                min={form.startDate > today ? form.startDate : today}
                 error={errors.endDate}
                 onChange={(v) => setForm({ ...form, endDate: v })} />
             </div>

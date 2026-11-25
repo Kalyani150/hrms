@@ -21,7 +21,7 @@ push to `main` (see `DEPLOYMENT.md`).
 | Dashboard | Totals, present today, pending/approved leaves, departments, payroll overview, recent employees, attendance trend | Profile card, today's check-in status, recent attendance, leave requests, latest payslip |
 | Employees | Add, edit, deactivate / reactivate, search, filter by department and status, sort | View and edit own profile (name, phone, address), change password |
 | Attendance | See everyone's records, filter by date | Check in / check out (Present or Late), own history |
-| Leave | See all requests, approve or reject, filter by status | Apply (Sick, Casual, Annual, Other), own history |
+| Leave | See all requests and filter by status; approve or reject recent requests from the dashboard | Apply (Sick, Casual, Annual, Other), own history |
 | Payroll | Generate for one or all employees, edit amounts of pending payslips, mark as paid, print payslips | View and print own payslips |
 
 Salary rule: `Net salary = Basic + Bonus - Deductions` (never below 0).
@@ -35,7 +35,12 @@ Salary rule: `Net salary = Basic + Bonus - Deductions` (never below 0).
 ## Project structure
 
 ```
-backend/    Express API  (models, routes, middleware, utils/validation.js, scripts/)
+backend/    Express API
+              routes/       URL, access rules (middleware) and which controller function handles it
+              controllers/  request validation and business logic, one file per area
+              models/       Mongoose schemas
+              middleware/   sign-in, role and id checks
+              utils/ scripts/
 frontend/   React app    (pages, components, context, utils/validation.js)
 DEPLOYMENT.md  Step-by-step hosting guide
 ```
@@ -59,7 +64,10 @@ cp .env.example .env
 npm run dev                 # site on http://localhost:5173
 ```
 
-Sign in with the admin you seeded, then add employees from **Employees -> Add Employee**.
+Employees sign in at `/login`. Administrators sign in at `/admin/login`; the employee page does not
+link to it, so open (or bookmark) that address directly.
+
+Sign in at `/admin/login` with the admin you seeded, then add employees from **Employees -> Add Employee**.
 
 ### Backend scripts
 
@@ -104,7 +112,7 @@ The same rules run in the browser (`frontend/src/utils/validation.js`) and on th
 - **Phone:** optional, exactly 10 digits
 - **Password:** 8+ characters with an uppercase letter, a lowercase letter, a number and a symbol
 - **Department / designation:** letters (plus spaces and `/ & - .`), 2-50 characters
-- **Leave:** end date not before start date, reason 10-500 characters
+- **Leave:** start date today or later (India time), end date not before start date, reason 10-500 characters
 
 ## Security notes
 
@@ -118,5 +126,7 @@ The same rules run in the browser (`frontend/src/utils/validation.js`) and on th
 
 ## Responsive layout
 
-Summary cards flow 4 -> 3 -> 2 per row as the screen narrows and show a single card below 400px wide.
-Employee and payslip cards follow the same pattern. Wide tables scroll inside their own card.
+Summary cards sit four in a row, then two by two, then one per row on very narrow phones, based on the
+space available, so a single card is never left on its own line. Employee and payslip cards follow the
+same pattern. Tables turn into one card per row when there is not
+enough room for their columns, so every value and button stays visible without scrolling sideways.

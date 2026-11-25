@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Users, CalendarDays, Wallet, ArrowRight, LogIn, LogOut, Clock, UserMinus, Sparkles, Mail, Phone, IdCard, Briefcase } from "lucide-react";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
-import { Card, Avatar, Badge, StatCard, btnPrimary, th, td } from "../ui";
+import { Card, Avatar, Badge, StatCard, LeaveReason, CardRow, btnPrimary, th, td } from "../ui";
 import { money, time, short, greeting, Hero, HeroAction, CardTitle, HoursChart } from "./parts";
 
 export default function EmployeeDashboard({ user, data, reload }) {
@@ -66,7 +66,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
         </div>
       </Hero>
 
-      <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <CardRow className="min-[340px]:grid-cols-2 @2xl:grid-cols-4">
         <StatCard label="Leaves Availed" value={leaveStats.taken} Icon={CalendarDays} tone="amber"
           hint={`of ${leaveStats.allowance} days this year`} to="/leaves" />
         <StatCard label="Leaves Remaining" value={leaveStats.remaining} Icon={Sparkles} tone="green"
@@ -75,7 +75,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
           hint={`${team.present} present today`} />
         <StatCard label="People Absent" value={team.absent} Icon={UserMinus} tone="violet"
           hint={`${team.onLeave} on approved leave`} />
-      </div>
+      </CardRow>
 
       <div className="grid gap-6 xl:grid-cols-3 *:min-w-0">
         <div className="space-y-6 xl:col-span-2">
@@ -189,17 +189,20 @@ export default function EmployeeDashboard({ user, data, reload }) {
             <CardTitle to="/leaves">My Requests</CardTitle>
             <ul className="mt-4 space-y-3">
               {data.leaves.map((l) => (
-                <li key={l._id} className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="rounded-xl bg-violet-50 p-2 text-violet-600"><Clock size={16} /></span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-800">{l.type}</p>
-                      <p className="text-xs text-slate-500">
-                        {l.startDate === l.endDate ? short(l.startDate) : `${short(l.startDate)} – ${short(l.endDate)}`}
-                      </p>
+                <li key={l._id} className="flex items-start gap-3">
+                  <span className="shrink-0 rounded-xl bg-violet-50 p-2 text-violet-600"><Clock size={16} /></span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-800">{l.type}</p>
+                        <p className="text-xs text-slate-500">
+                          {l.startDate === l.endDate ? short(l.startDate) : `${short(l.startDate)} – ${short(l.endDate)}`}
+                        </p>
+                      </div>
+                      <Badge value={l.status} />
                     </div>
+                    <LeaveReason text={l.reason} className="mt-1 text-xs text-slate-600" />
                   </div>
-                  <Badge value={l.status} />
                 </li>
               ))}
               {data.leaves.length === 0 && (

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Check, Users, CalendarDays, Wallet, CalendarCheck, X, UserPlus, ClipboardCheck, BadgeIndianRupee, UserCheck, CircleCheck, Building2 } from "lucide-react";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
-import { Card, Avatar, Badge, StatCard, th, td } from "../ui";
+import { Card, Avatar, Badge, StatCard, ResponsiveTable, LeaveReason, CardRow, cell } from "../ui";
 import { money, time, short, greeting, Hero, HeroAction, CardTitle, MiniStat, AttendanceChart, DepartmentBars } from "./parts";
 
 export default function AdminDashboard({ user, data, reload }) {
@@ -54,7 +54,7 @@ export default function AdminDashboard({ user, data, reload }) {
         </div>
       </Hero>
 
-      <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <CardRow className="min-[340px]:grid-cols-2 @2xl:grid-cols-4">
         <StatCard label="Total Employees" value={data.totalEmployees} Icon={Users} tone="blue"
           hint={`Active ${data.activeEmployees} · Inactive ${data.inactiveEmployees}`} to="/employees" />
         <StatCard label="Leave Requests" value={data.pendingLeaves} Icon={CalendarDays} tone="amber"
@@ -63,16 +63,16 @@ export default function AdminDashboard({ user, data, reload }) {
           hint={`${data.onLeaveToday} on leave · ${data.absentToday} absent`} to="/attendance" />
         <StatCard label="Payroll Completion" value={`${completion}%`} Icon={Wallet} tone="violet"
           hint={`${p.paidCount}/${p.count} payslips paid`} to="/payroll" />
-      </div>
+      </CardRow>
 
-      <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-4">
+      <CardRow className="@lg:grid-cols-3">
         <MiniStat label="Active Employees" value={data.activeEmployees} Icon={UserCheck} tone="green"
           hint={`of ${data.totalEmployees} total`} to="/employees" />
         <MiniStat label="Approved Leaves" value={data.approvedLeaves} Icon={CircleCheck} tone="blue"
           hint="All time" to="/leaves" />
         <MiniStat label="Total Departments" value={data.totalDepartments} Icon={Building2} tone="violet"
           hint="Across the company" to="/employees" />
-      </div>
+      </CardRow>
 
       <div className="grid gap-6 lg:grid-cols-3 *:min-w-0">
         <Card className="p-4 sm:p-5 lg:col-span-2">
@@ -91,55 +91,53 @@ export default function AdminDashboard({ user, data, reload }) {
         <div className="space-y-6 xl:col-span-2">
         <Card className="overflow-hidden">
           <div className="p-4 sm:p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
-          {/* same table on every screen size; scrolls sideways inside the card on small screens */}
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px] text-left">
-              <thead className="bg-slate-50">
-                <tr>
-                  {["Employee Name", "Leave Type", "Date", "Status", "Action"].map((h) =>
-                    <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>)}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {data.recentLeaves.map((l) => (
-                  <tr key={l._id} className="hover:bg-slate-50/70">
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                      <div className="flex items-center gap-3">
-                        <Avatar name={l.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
-                        <span className="font-medium text-slate-800">{l.employee?.name}</span>
-                      </div>
-                    </td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{l.type}</td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                      {l.startDate === l.endDate
-                        ? short(l.startDate)
-                        : `${short(l.startDate)} – ${short(l.endDate)}`}
-                    </td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={l.status} /></td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                      {l.status === "Pending" ? (
-                        <div className="flex gap-2">
-                          <button onClick={() => review(l._id, "Approved")} title="Approve"
-                            className="rounded-lg bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100">
-                            <Check size={16} />
-                          </button>
-                          <button onClick={() => review(l._id, "Rejected")} title="Reject"
-                            className="rounded-lg bg-rose-50 p-2 text-rose-600 hover:bg-rose-100">
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ) : <span className="text-slate-300">—</span>}
-                    </td>
-                  </tr>
-                ))}
-                {data.recentLeaves.length === 0 && (
-                  <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-slate-400">
-                    No leave requests yet
-                  </td></tr>
+          {/* a table when there is room, one card per request on smaller screens */}
+          <ResponsiveTable stackBelow={600}
+            columns={["Employee", "Leave & Reason", "Date", "Status", "Action"]}>
+            {data.recentLeaves.map((l) => (
+              <tr key={l._id} className="hover:bg-slate-50/70">
+                <td className={cell}>
+                  <div className="flex items-center gap-2.5">
+                    <Avatar name={l.employee?.name} size="h-8 w-8 text-[11px]" />
+                    <span className="font-medium text-slate-800">{l.employee?.name}</span>
+                  </div>
+                </td>
+                <td className={`${cell} w-2/5`} data-label="Leave & Reason" data-wide>
+                  <div className="min-w-36">
+                    <p className="font-medium text-slate-800">{l.type}</p>
+                    <LeaveReason text={l.reason} className="mt-0.5 text-xs text-slate-500" />
+                  </div>
+                </td>
+                <td className={cell} data-label="Date">
+                  {l.startDate === l.endDate
+                    ? short(l.startDate)
+                    : `${short(l.startDate)} – ${short(l.endDate)}`}
+                </td>
+                <td className={cell} data-label="Status"><Badge value={l.status} /></td>
+                {l.status === "Pending" ? (
+                  <td className={cell} data-label="Action">
+                    <div className="flex gap-2">
+                      <button onClick={() => review(l._id, "Approved")} title="Approve" aria-label="Approve"
+                        className="rounded-lg bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100">
+                        <Check size={16} />
+                      </button>
+                      <button onClick={() => review(l._id, "Rejected")} title="Reject" aria-label="Reject"
+                        className="rounded-lg bg-rose-50 p-2 text-rose-600 hover:bg-rose-100">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </td>
+                ) : (
+                  <td className={cell} data-empty><span className="text-slate-300">—</span></td>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </tr>
+            ))}
+            {data.recentLeaves.length === 0 && (
+              <tr><td colSpan={5} className="px-5 py-12 text-center text-sm text-slate-400">
+                No leave requests yet
+              </td></tr>
+            )}
+          </ResponsiveTable>
         </Card>
 
         <Card className="p-4 sm:p-5">

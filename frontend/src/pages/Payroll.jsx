@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard, Pagination,
-  inputCls, btnPrimary, btnGhost, th, td
+  ResponsiveTable, CardRow, inputCls, btnPrimary, btnGhost, cell
 } from "../components/ui";
 import FormField from "../components/FormField";
 import {
@@ -232,7 +232,7 @@ export default function Payroll() {
   // Admin actions for an unpaid payslip: Edit amounts, Mark Paid
   const payAction = (r) =>
     isAdmin && r.status === "Pending" && (
-      <div className="flex gap-2">
+      <>
         <button onClick={() => openEdit(r)}
           className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs
           font-medium text-blue-700 hover:bg-blue-100">
@@ -243,7 +243,7 @@ export default function Payroll() {
           font-medium text-emerald-700 hover:bg-emerald-100">
           <BadgeCheck size={14} /> Mark Paid
         </button>
-      </div>
+      </>
     );
 
   return (
@@ -259,7 +259,7 @@ export default function Payroll() {
         )}
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <CardRow className="min-[400px]:grid-cols-2 @2xl:grid-cols-4">
         <StatCard label="Total net payroll" value={money(sum(records))} Icon={Wallet} tone="blue"
           hint={`${records.length} payslip${records.length === 1 ? "" : "s"}`} />
         <StatCard label="Paid" value={money(sum(paid))} Icon={CircleCheck} tone="green"
@@ -268,7 +268,7 @@ export default function Payroll() {
           hint={`${pending.length} awaiting payment`} />
         <StatCard label="Completion" value={`${completion}%`} Icon={PieChart} tone="violet"
           hint={`${paid.length} of ${records.length} paid`} />
-      </div>
+      </CardRow>
 
       <Card className="p-5">
         <div className="flex items-center justify-between text-sm">
@@ -316,11 +316,11 @@ export default function Payroll() {
 
       {view === "cards" ? (
         loading ? (
-          <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          <CardRow className="min-[400px]:grid-cols-2 @4xl:grid-cols-4">
             <SkeletonCards count={8} height="h-72" />
-          </div>
+          </CardRow>
         ) : records.length ? (
-          <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          <CardRow className="min-[400px]:grid-cols-2 @4xl:grid-cols-4">
             {visible.map((r) => (
               <Card key={r._id} className="overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
                 <div className={`p-5 text-white ${
@@ -369,48 +369,44 @@ export default function Payroll() {
                 </div>
               </Card>
             ))}
-          </div>
+          </CardRow>
         ) : (
           <Card className="p-14 text-center text-sm text-slate-400">No payroll records</Card>
         )
       ) : (
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] sm:min-w-[900px] text-left">
-              <thead className="bg-slate-50">
-                <tr>
-                  {["Employee", "Month", "Basic", "Bonus", "Deductions", "Net Salary", "Status", "Action"]
-                    .map((h) => <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>)}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {loading ? <SkeletonRows cols={8} /> : visible.map((r) => (
-                  <tr key={r._id} className="transition hover:bg-slate-50/70">
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                      <div className="flex items-center gap-3">
-                        <Avatar name={r.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
-                        <span className="font-medium text-slate-800">{r.employee?.name}</span>
-                      </div>
-                    </td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{monthLabel(r.month)}</td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{money(r.basic)}</td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! text-emerald-600 sm:px-5! sm:py-4!`}>{r.bonus ? `+ ${money(r.bonus)}` : money(0)}</td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! text-rose-600 sm:px-5! sm:py-4!`}>{r.deductions ? `− ${money(r.deductions)}` : money(0)}</td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! font-bold text-slate-800 sm:px-5! sm:py-4!`}>{money(r.netSalary)}</td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={r.status} /></td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                      <div className="flex gap-2">
-                        {payAction(r)}
-                        {printBtn(r)}
-                        {deleteBtn(r)}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {!loading && records.length === 0 && <EmptyRow cols={8} text="No payroll records" />}
-              </tbody>
-            </table>
-          </div>
+          {/* a table when there is room, one card per payslip on smaller screens */}
+          <ResponsiveTable stackBelow={1000}
+            columns={["Employee", "Month", "Basic", "Bonus", "Deductions", "Net Salary", "Status", "Action"]}>
+            {loading ? <SkeletonRows cols={8} /> : visible.map((r) => (
+              <tr key={r._id} className="transition hover:bg-slate-50/70">
+                <td className={cell}>
+                  <div className="flex items-center gap-2.5">
+                    <Avatar name={r.employee?.name} size="h-8 w-8 text-[11px]" />
+                    <span className="font-medium text-slate-800">{r.employee?.name}</span>
+                  </div>
+                </td>
+                <td className={`${cell} whitespace-nowrap`} data-label="Month">{monthLabel(r.month)}</td>
+                <td className={`${cell} whitespace-nowrap`} data-label="Basic">{money(r.basic)}</td>
+                <td className={`${cell} whitespace-nowrap`} data-label="Bonus">
+                  <span className="text-emerald-600">{r.bonus ? `+ ${money(r.bonus)}` : money(0)}</span>
+                </td>
+                <td className={`${cell} whitespace-nowrap`} data-label="Deductions">
+                  <span className="text-rose-600">{r.deductions ? `− ${money(r.deductions)}` : money(0)}</span>
+                </td>
+                <td className={`${cell} whitespace-nowrap font-bold`} data-label="Net Salary">{money(r.netSalary)}</td>
+                <td className={cell} data-label="Status"><Badge value={r.status} /></td>
+                <td className={cell}>
+                  <div className="flex min-w-44 flex-wrap gap-2">
+                    {payAction(r)}
+                    {printBtn(r)}
+                    {deleteBtn(r)}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!loading && records.length === 0 && <EmptyRow cols={8} text="No payroll records" />}
+          </ResponsiveTable>
         </Card>
       )}
 

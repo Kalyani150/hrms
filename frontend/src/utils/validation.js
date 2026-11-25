@@ -120,6 +120,19 @@ export function validateDate(value = "", label = "Date") {
   return Number.isNaN(new Date(value).getTime()) ? `${label} is not a valid date` : "";
 }
 
+// Today as YYYY-MM-DD in India time: the same "today" the backend uses
+export const todayKey = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit"
+  }).format(new Date());
+
+// Leave can only start today or later
+export function validateStartDate(value = "") {
+  const required = validateDate(value, "Start date");
+  if (required) return required;
+  return value < todayKey() ? "Start date cannot be in the past" : "";
+}
+
 export const validateAddress = (value = "") =>
   value.trim().length <= 300 ? "" : "Address must be at most 300 characters";
 
@@ -140,7 +153,8 @@ export function validateReason(value = "") {
 export function validateEndDate(start, end) {
   const required = validateDate(end, "End date");
   if (required) return required;
-  return start && end < start ? "End date cannot be before start date" : "";
+  if (start && end < start) return "End date cannot be before start date";
+  return end < todayKey() ? "End date cannot be in the past" : "";
 }
 
 export const validateConfirm = (password = "", confirm = "") =>

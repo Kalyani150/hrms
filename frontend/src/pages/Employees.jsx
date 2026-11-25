@@ -7,7 +7,7 @@ import api from "../api/axios";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard, Pagination,
-  inputCls, btnPrimary, btnGhost, th, td
+  ResponsiveTable, CardRow, inputCls, btnPrimary, btnGhost, cell
 } from "../components/ui";
 import FormField from "../components/FormField";
 import PasswordField from "../components/PasswordField";
@@ -206,7 +206,7 @@ export default function Employees() {
         </button>
       </PageHeader>
 
-      <div className="grid grid-cols-1 gap-3 min-[320px]:grid-cols-2 min-[890px]:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <CardRow className="min-[320px]:grid-cols-2 @2xl:grid-cols-4">
         <StatCard label="Total Employees" value={employees.length} Icon={Users} tone="blue"
           hint="Everyone on the team" />
         <StatCard label="Active" value={active} Icon={UserCheck} tone="green"
@@ -215,10 +215,10 @@ export default function Employees() {
           hint="Deactivated accounts" />
         <StatCard label="Departments" value={departments.length} Icon={Building2} tone="violet"
           hint={departments.slice(0, 3).join(" · ") || "—"} />
-      </div>
+      </CardRow>
 
       <Card className="grid grid-cols-2 gap-3 p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto]">
-        <div className="relative min-w-0">
+        <div className="relative col-span-2 min-w-0 md:col-span-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
           <input placeholder="Search employees" title="Search by name, email, phone, department or role"
             value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -242,7 +242,7 @@ export default function Employees() {
           <option value="highest">Highest salary</option>
         </select>
 
-        <div className="col-span-2 flex w-fit justify-self-end rounded-xl bg-slate-100 p-0.5 md:col-span-1 md:p-1">
+        <div className="flex w-fit self-center justify-self-end rounded-xl bg-slate-100 p-0.5 md:p-1">
           {[["cards", LayoutGrid], ["table", List]].map(([key, Icon]) => (
             <button key={key} onClick={() => setView(key)} title={`${key} view`}
               className={`rounded-lg px-2.5 py-1.5 transition md:px-3 md:py-2 ${
@@ -256,11 +256,11 @@ export default function Employees() {
 
       {view === "cards" ? (
         loading ? (
-          <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          <CardRow className="min-[400px]:grid-cols-2 @4xl:grid-cols-4">
             <SkeletonCards count={8} height="h-80" />
-          </div>
+          </CardRow>
         ) : filtered.length ? (
-          <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          <CardRow className="min-[400px]:grid-cols-2 @4xl:grid-cols-4">
             {visible.map((emp) => (
               <Card key={emp._id}
                 className="cursor-pointer overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md"
@@ -302,55 +302,47 @@ export default function Employees() {
                 </div>
               </Card>
             ))}
-          </div>
+          </CardRow>
         ) : (
           <Card className="p-14 text-center text-sm text-slate-400">No employees found</Card>
         )
       ) : (
         <Card className="overflow-hidden">
-          {/* scrolls sideways inside the card on small screens */}
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[780px] sm:min-w-[950px] text-left">
-              <thead className="bg-slate-50">
-                <tr>
-                  {["Employee", "Contact", "Department", "Designation", "Salary", "Status", "Actions"].map((h) =>
-                    <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {loading ? <SkeletonRows cols={7} /> : visible.map((emp) => (
-                  <tr key={emp._id} className="transition hover:bg-slate-50/70">
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                      <div className="flex items-center gap-3">
-                        <Avatar name={emp.name} size="h-9 w-9 text-xs sm:h-10 sm:w-10 sm:text-sm" />
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-800">{emp.name}</p>
-                          <p className="text-xs text-slate-500">{emp.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={`${td} max-w-[180px] px-3! py-3! sm:max-w-[220px] sm:px-5! sm:py-4!`}>
-                      <p>{emp.phone || <span className="text-slate-300">—</span>}</p>
-                      {emp.address && (
-                        <p className="truncate text-xs text-slate-500" title={emp.address}>{emp.address}</p>
-                      )}
-                    </td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                      <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                        {emp.department}
-                      </span>
-                    </td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{emp.designation}</td>
-                    <td className={`${td} whitespace-nowrap font-semibold text-slate-800 px-3! py-3! sm:px-5! sm:py-4!`}>₹{emp.salary.toLocaleString("en-IN")}</td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={emp.status} /></td>
-                    <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{actionButtons(emp)}</td>
-                  </tr>
-                ))}
-                {!loading && filtered.length === 0 && <EmptyRow cols={7} text="No employees found" />}
-              </tbody>
-            </table>
-          </div>
+          {/* a table when there is room, one card per employee on smaller screens */}
+          <ResponsiveTable stackBelow={960}
+            columns={["Employee", "Contact", "Department", "Designation", "Salary", "Status", "Actions"]}>
+            {loading ? <SkeletonRows cols={7} /> : visible.map((emp) => (
+              <tr key={emp._id} className="transition hover:bg-slate-50/70">
+                <td className={cell}>
+                  <div className="flex items-center gap-2.5">
+                    <Avatar name={emp.name} size="h-9 w-9 text-xs" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-800">{emp.name}</p>
+                      <p className="text-xs text-slate-500 [overflow-wrap:anywhere]">{emp.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className={cell} data-label="Contact">
+                  <div>
+                    <p>{emp.phone || <span className="text-slate-300">—</span>}</p>
+                    {emp.address && (
+                      <p className="text-xs text-slate-500 [overflow-wrap:anywhere]">{emp.address}</p>
+                    )}
+                  </div>
+                </td>
+                <td className={cell} data-label="Department">
+                  <span className="inline-block rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                    {emp.department}
+                  </span>
+                </td>
+                <td className={cell} data-label="Designation">{emp.designation}</td>
+                <td className={`${cell} whitespace-nowrap font-semibold`} data-label="Salary">₹{emp.salary.toLocaleString("en-IN")}</td>
+                <td className={cell} data-label="Status"><Badge value={emp.status} /></td>
+                <td className={cell} data-label="Actions">{actionButtons(emp)}</td>
+              </tr>
+            ))}
+            {!loading && filtered.length === 0 && <EmptyRow cols={7} text="No employees found" />}
+          </ResponsiveTable>
         </Card>
       )}
 

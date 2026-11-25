@@ -4,8 +4,10 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, StatCard, Pagination, inputCls, th, td
+  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, StatCard, Pagination, ResponsiveTable,
+  CardRow, inputCls, cell
 } from "../components/ui";
+import { todayKey } from "../utils/validation";
 
 const PAGE_SIZE = 10; // records per page
 
@@ -20,12 +22,6 @@ const hours = (a, b) => {
 
 const clock = (d) =>
   new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-
-// Today's date as the backend sees it (YYYY-MM-DD in India time)
-const todayKey = () =>
-  new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit"
-  }).format(new Date());
 
 const dayLabel = (d) =>
   new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", {
@@ -115,15 +111,15 @@ export default function Attendance() {
               Check in when you start work and check out when you finish.
             </p>
           </div>
-          <div className="relative flex gap-3">
+          <div className="relative grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
             <button onClick={() => action("check-in")} disabled={!!today}
-              className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm
+              className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-3 text-sm sm:px-5
               font-semibold text-blue-700 shadow transition hover:bg-blue-50
               disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white">
               <LogIn size={18} /> Check In
             </button>
             <button onClick={() => action("check-out")} disabled={!today || !!today.checkOut}
-              className="flex items-center gap-2 rounded-xl bg-white/15 px-5 py-3 text-sm
+              className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white/15 px-3 py-3 text-sm sm:px-5
               font-semibold ring-1 ring-white/40 transition hover:bg-white/25
               disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/15">
               <LogOut size={18} /> Check Out
@@ -132,7 +128,7 @@ export default function Attendance() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:grid-cols-3 sm:gap-5 xl:grid-cols-4">
+      <CardRow className="min-[400px]:grid-cols-2 @2xl:grid-cols-4">
         <StatCard label="Total Records" value={records.length} Icon={CalendarCheck} tone="blue"
           hint={date ? `On ${dayLabel(date)}` : "All check-ins"} />
         <StatCard label="On Time" value={present} Icon={CheckCircle2} tone="green"
@@ -141,7 +137,7 @@ export default function Attendance() {
           hint="Checked in after 09:30" />
         <StatCard label="Average Hours" value={done.length ? `${Math.floor(avgMins / 60)}h ${String(avgMins % 60).padStart(2, "0")}m` : "--"}
           Icon={Timer} tone="violet" hint={`${done.length} completed day${done.length === 1 ? "" : "s"}`} />
-      </div>
+      </CardRow>
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
@@ -167,52 +163,42 @@ export default function Attendance() {
           </div>
         </div>
 
-        {/* scrolls sideways inside the card on small screens */}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[620px] sm:min-w-[750px] text-left">
-            <thead className="bg-slate-50">
-              <tr>
-                {["Employee", "Date", "Check In", "Check Out", "Hours", "Status"].map((h) =>
-                  <th key={h} className={`${th} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-3.5!`}>{h}</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? <SkeletonRows cols={6} /> : visible.map((r) => (
-                <tr key={r._id} className={`transition hover:bg-slate-50/70 ${
-                  r.status === "Late" ? "bg-amber-50/30" : ""}`}>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                    <div className="flex items-center gap-3">
-                      <Avatar name={r.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
-                      <div>
-                        <p className="font-medium text-slate-800">{r.employee?.name}</p>
-                        {r.employee?.department && (
-                          <p className="text-xs text-slate-500">{r.employee.department}</p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>{dayLabel(r.date)}</td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                    <span className="flex items-center gap-1.5 text-emerald-700">
-                      <LogIn size={14} /> {clock(r.checkIn)}
-                    </span>
-                  </td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}>
-                    {r.checkOut ? (
-                      <span className="flex items-center gap-1.5 text-rose-600">
-                        <LogOut size={14} /> {clock(r.checkOut)}
-                      </span>
-                    ) : <span className="text-slate-300">--</span>}
-                  </td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! font-medium text-slate-800 sm:px-5! sm:py-4!`}>{hours(r.checkIn, r.checkOut)}</td>
-                  <td className={`${td} whitespace-nowrap px-3! py-3! sm:px-5! sm:py-4!`}><Badge value={r.status} /></td>
-                </tr>
-              ))}
-              {!loading && shown.length === 0 && <EmptyRow cols={6} text="No attendance records" />}
-            </tbody>
-          </table>
-        </div>
+        {/* a table when there is room, one card per record on smaller screens */}
+        <ResponsiveTable stackBelow={640}
+          columns={["Employee", "Date", "Check In", "Check Out", "Hours", "Status"]}>
+          {loading ? <SkeletonRows cols={6} /> : visible.map((r) => (
+            <tr key={r._id} className={`transition hover:bg-slate-50/70 ${
+              r.status === "Late" ? "bg-amber-50/30" : ""}`}>
+              <td className={cell}>
+                <div className="flex items-center gap-2.5">
+                  <Avatar name={r.employee?.name} size="h-9 w-9 text-xs" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-800">{r.employee?.name}</p>
+                    {r.employee?.department && (
+                      <p className="text-xs text-slate-500">{r.employee.department}</p>
+                    )}
+                  </div>
+                </div>
+              </td>
+              <td className={`${cell} whitespace-nowrap`} data-label="Date">{dayLabel(r.date)}</td>
+              <td className={`${cell} whitespace-nowrap`} data-label="Check In">
+                <span className="flex items-center gap-1.5 text-emerald-700">
+                  <LogIn size={14} /> {clock(r.checkIn)}
+                </span>
+              </td>
+              <td className={`${cell} whitespace-nowrap`} data-label="Check Out">
+                {r.checkOut ? (
+                  <span className="flex items-center gap-1.5 text-rose-600">
+                    <LogOut size={14} /> {clock(r.checkOut)}
+                  </span>
+                ) : <span className="text-slate-300">--</span>}
+              </td>
+              <td className={`${cell} whitespace-nowrap font-medium`} data-label="Hours">{hours(r.checkIn, r.checkOut)}</td>
+              <td className={cell} data-label="Status"><Badge value={r.status} /></td>
+            </tr>
+          ))}
+          {!loading && shown.length === 0 && <EmptyRow cols={6} text="No attendance records" />}
+        </ResponsiveTable>
 
         {!loading && shown.length > PAGE_SIZE && (
           <div className="border-t border-slate-100 p-4">
