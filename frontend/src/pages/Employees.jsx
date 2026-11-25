@@ -316,33 +316,34 @@ export default function Employees() {
                 <td className={cell}>
                   <div className="flex items-center gap-2.5">
                     <Avatar name={emp.name} size="h-9 w-9 text-xs" />
-                    <div className="min-w-0">
+                    {/* phones and tablets: long names and emails are cut to one line so rows stay the same height */}
+                    <div className="min-w-0 max-lg:w-36 max-lg:*:truncate">
                       <p className="font-semibold text-slate-800">{emp.name}</p>
                       <p className="text-xs text-slate-500 [overflow-wrap:anywhere]">{emp.email}</p>
                     </div>
                   </div>
                 </td>
                 <td className={cell}>
-                  <div>
+                  <div className="min-w-40">
                     <p>{emp.phone || <span className="text-slate-300">—</span>}</p>
                     {emp.address && (
                       <ExpandableText text={emp.address} className="text-xs text-slate-500" />
                     )}
                   </div>
                 </td>
-                <td className={cell}>
+                <td className={`${cell} max-xl:whitespace-nowrap`}>
                   {emp.department ? (
                     <span className="inline-block rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                       {emp.department}
                     </span>
                   ) : <span className="text-slate-300">—</span>}
                 </td>
-                <td className={cell}>
+                <td className={`${cell} max-xl:whitespace-nowrap`}>
                   {emp.designation || <span className="text-slate-300">—</span>}
                 </td>
                 <td className={`${cell} whitespace-nowrap font-semibold`}>₹{emp.salary.toLocaleString("en-IN")}</td>
                 <td className={cell}><Badge value={emp.status} /></td>
-                <td className={cell}>{actionButtons(emp)}</td>
+                <td className={`${cell} max-xl:[&>div]:flex-nowrap`}>{actionButtons(emp)}</td>
               </tr>
             ))}
             {!loading && filtered.length === 0 && <EmptyRow cols={7} text="No employees found" />}

@@ -398,7 +398,7 @@ export default function Payroll() {
                 <td className={cell}>
                   <div className="flex items-center gap-2.5">
                     <Avatar name={r.employee?.name} size="h-8 w-8 text-[11px]" />
-                    <span className="font-medium text-slate-800">{r.employee?.name}</span>
+                    <span className="font-medium text-slate-800 max-lg:w-36 max-lg:truncate">{r.employee?.name}</span>
                   </div>
                 </td>
                 <td className={`${cell} whitespace-nowrap`}>{monthLabel(r.month)}</td>
@@ -412,7 +412,7 @@ export default function Payroll() {
                 <td className={`${cell} whitespace-nowrap font-bold`}>{money(r.netSalary)}</td>
                 <td className={cell}><Badge value={r.status} /></td>
                 <td className={cell}>
-                  <div className="flex min-w-44 flex-wrap gap-2">
+                  <div className="flex min-w-44 flex-wrap gap-2 max-xl:flex-nowrap max-xl:whitespace-nowrap">
                     {payAction(r)}
                     {printBtn(r)}
                     {deleteBtn(r)}

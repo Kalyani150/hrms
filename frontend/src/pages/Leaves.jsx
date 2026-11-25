@@ -120,7 +120,7 @@ export default function Leaves() {
         </div>
 
         {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
-        {/* on phones long names are cut to one line, so rows are the same height and columns stay compact */}
+        {/* on phones and tablets long names are cut to one line, so rows are the same height and columns stay compact */}
         <DataTable className="min-w-[640px] sm:min-w-[720px]"
           columns={["Employee", "Type", "Duration", "Reason", "Status"]}>
           {loading ? <SkeletonRows cols={5} /> : shown.map((l) => (
@@ -128,7 +128,7 @@ export default function Leaves() {
               <td className={cell}>
                 <div className="flex items-center gap-2.5 sm:gap-3">
                   <Avatar name={l.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
-                  <div className="max-sm:w-32 max-sm:*:truncate sm:min-w-32">
+                  <div className="max-lg:w-36 max-lg:*:truncate lg:min-w-32">
                     <p className="font-medium text-slate-800">{l.employee?.name}</p>
                     {l.employee?.department && (
                       <p className="text-xs text-slate-500">{l.employee.department}</p>

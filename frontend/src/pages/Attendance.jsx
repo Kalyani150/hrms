@@ -140,8 +140,9 @@ export default function Attendance() {
       </CardRow>
 
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
-          <div className="flex gap-2">
+        {/* phones: the buttons and the date box each fill one full-width row */}
+        <div className="flex flex-col gap-2 border-b border-slate-100 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:p-4">
+          <div className="grid grid-cols-3 gap-2 sm:flex">
             {tabs.map(([name, count]) => (
               <button key={name} onClick={() => { setTab(name); setPage(1); }}
                 className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
@@ -155,7 +156,7 @@ export default function Attendance() {
           </div>
           <div className="flex items-center gap-2">
             <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setPage(1); }}
-              className={`${inputCls} w-auto py-2`} />
+              aria-label="Date" className={`${inputCls} min-w-0 py-2 sm:w-auto`} />
             {date && (
               <button onClick={() => { setDate(""); setPage(1); }}
                 className="text-sm font-medium text-blue-600 hover:underline">Clear</button>
@@ -164,7 +165,8 @@ export default function Attendance() {
         </div>
 
         {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
-        <DataTable className="min-w-[700px]"
+        {/* on phones and tablets long names are cut to one line, so rows are the same height and columns stay compact */}
+        <DataTable className="min-w-[640px] sm:min-w-[700px]"
           columns={["Employee", "Date", "Check In", "Check Out", "Hours", "Status"]}>
           {loading ? <SkeletonRows cols={6} /> : visible.map((r) => (
             <tr key={r._id} className={`transition hover:bg-slate-50/70 ${
@@ -172,7 +174,7 @@ export default function Attendance() {
               <td className={cell}>
                 <div className="flex items-center gap-2.5">
                   <Avatar name={r.employee?.name} size="h-9 w-9 text-xs" />
-                  <div className="min-w-0">
+                  <div className="min-w-0 max-lg:w-36 max-lg:*:truncate">
                     <p className="font-medium text-slate-800">{r.employee?.name}</p>
                     {r.employee?.department && (
                       <p className="text-xs text-slate-500">{r.employee.department}</p>

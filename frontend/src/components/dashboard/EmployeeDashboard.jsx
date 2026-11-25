@@ -90,7 +90,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
             <div className="p-4 sm:p-5"><CardTitle to="/attendance">Recent Attendance</CardTitle></div>
             {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[480px] text-left">
+              <table className="w-full min-w-[480px] whitespace-nowrap text-left">
                 <thead className="bg-slate-50">
                   <tr>{["Date", "Check In", "Check Out", "Status"].map((h) =>
                     <th key={h} className={th}>{h}</th>)}</tr>

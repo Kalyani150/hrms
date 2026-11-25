@@ -92,18 +92,18 @@ export default function AdminDashboard({ user, data, reload }) {
         <Card className="overflow-hidden">
           <div className="p-4 sm:p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
           {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
-          <DataTable className="min-w-[640px]"
+          <DataTable className="min-w-[680px] xl:min-w-0"
             columns={["Employee", "Leave & Reason", "Date", "Status", "Action"]}>
             {data.recentLeaves.map((l) => (
               <tr key={l._id} className="hover:bg-slate-50/70">
                 <td className={cell}>
                   <div className="flex items-center gap-2.5">
                     <Avatar name={l.employee?.name} size="h-8 w-8 text-[11px]" />
-                    <span className="font-medium text-slate-800">{l.employee?.name}</span>
+                    <span className="font-medium text-slate-800 max-lg:w-36 max-lg:truncate">{l.employee?.name}</span>
                   </div>
                 </td>
                 <td className={`${cell} w-2/5`}>
-                  <div className="min-w-28">
+                  <div className="min-w-28 max-xl:min-w-40"> {/* room for the shortened reason on one line */}
                     <p className="font-medium text-slate-800">{l.type}</p>
                     <ExpandableText text={l.reason} empty="No reason provided" className="mt-0.5 text-xs text-slate-500" />
                   </div>
