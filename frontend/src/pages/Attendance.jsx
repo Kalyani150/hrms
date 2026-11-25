@@ -4,7 +4,7 @@ import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
-  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, StatCard, Pagination, ResponsiveTable,
+  PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, StatCard, Pagination, DataTable,
   CardRow, inputCls, cell
 } from "../components/ui";
 import { todayKey } from "../utils/validation";
@@ -163,8 +163,8 @@ export default function Attendance() {
           </div>
         </div>
 
-        {/* a table when there is room, one card per record on smaller screens */}
-        <ResponsiveTable stackBelow={640}
+        {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
+        <DataTable className="min-w-[700px]"
           columns={["Employee", "Date", "Check In", "Check Out", "Hours", "Status"]}>
           {loading ? <SkeletonRows cols={6} /> : visible.map((r) => (
             <tr key={r._id} className={`transition hover:bg-slate-50/70 ${
@@ -180,25 +180,25 @@ export default function Attendance() {
                   </div>
                 </div>
               </td>
-              <td className={`${cell} whitespace-nowrap`} data-label="Date">{dayLabel(r.date)}</td>
-              <td className={`${cell} whitespace-nowrap`} data-label="Check In">
+              <td className={`${cell} whitespace-nowrap`}>{dayLabel(r.date)}</td>
+              <td className={`${cell} whitespace-nowrap`}>
                 <span className="flex items-center gap-1.5 text-emerald-700">
                   <LogIn size={14} /> {clock(r.checkIn)}
                 </span>
               </td>
-              <td className={`${cell} whitespace-nowrap`} data-label="Check Out">
+              <td className={`${cell} whitespace-nowrap`}>
                 {r.checkOut ? (
                   <span className="flex items-center gap-1.5 text-rose-600">
                     <LogOut size={14} /> {clock(r.checkOut)}
                   </span>
                 ) : <span className="text-slate-300">--</span>}
               </td>
-              <td className={`${cell} whitespace-nowrap font-medium`} data-label="Hours">{hours(r.checkIn, r.checkOut)}</td>
-              <td className={cell} data-label="Status"><Badge value={r.status} /></td>
+              <td className={`${cell} whitespace-nowrap font-medium`}>{hours(r.checkIn, r.checkOut)}</td>
+              <td className={cell}><Badge value={r.status} /></td>
             </tr>
           ))}
           {!loading && shown.length === 0 && <EmptyRow cols={6} text="No attendance records" />}
-        </ResponsiveTable>
+        </DataTable>
 
         {!loading && shown.length > PAGE_SIZE && (
           <div className="border-t border-slate-100 p-4">

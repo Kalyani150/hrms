@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Check, Users, CalendarDays, Wallet, CalendarCheck, X, UserPlus, ClipboardCheck, BadgeIndianRupee, UserCheck, CircleCheck, Building2 } from "lucide-react";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
-import { Card, Avatar, Badge, StatCard, ResponsiveTable, ExpandableText, CardRow, cell } from "../ui";
+import { Card, Avatar, Badge, StatCard, DataTable, ExpandableText, CardRow, cell } from "../ui";
 import { money, time, short, greeting, Hero, HeroAction, CardTitle, MiniStat, AttendanceChart, DepartmentBars } from "./parts";
 
 export default function AdminDashboard({ user, data, reload }) {
@@ -92,7 +92,7 @@ export default function AdminDashboard({ user, data, reload }) {
         <Card className="overflow-hidden">
           <div className="p-4 sm:p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
           {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
-          <ResponsiveTable className="min-w-[640px]"
+          <DataTable className="min-w-[640px]"
             columns={["Employee", "Leave & Reason", "Date", "Status", "Action"]}>
             {data.recentLeaves.map((l) => (
               <tr key={l._id} className="hover:bg-slate-50/70">
@@ -137,7 +137,7 @@ export default function AdminDashboard({ user, data, reload }) {
                 No leave requests yet
               </td></tr>
             )}
-          </ResponsiveTable>
+          </DataTable>
         </Card>
 
         <Card className="p-4 sm:p-5">

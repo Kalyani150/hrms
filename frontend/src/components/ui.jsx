@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { X, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
@@ -24,7 +24,7 @@ export const btnGhost =
 export const th =
   "px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500";
 export const td = "px-5 py-4 text-sm text-slate-700";
-// Narrower cells for ResponsiveTable, so more columns fit before it has to switch to cards
+// Narrower cells for DataTable, so more columns fit without scrolling
 export const cell = "px-3 py-3.5 text-sm text-slate-700 xl:px-4";
 
 /* A row of equal cards. The column classes are chosen by the space actually available (@... variants),
@@ -37,25 +37,12 @@ export function CardRow({ className = "", children }) {
   );
 }
 
-/* A normal table while its container is at least `stackBelow` pixels wide, otherwise one card per row.
-   Without `stackBelow` it stays a table and scrolls sideways when narrow.
-   In card form each cell is labelled by its data-label; see .table-stacked in index.css. */
-export function ResponsiveTable({ columns, stackBelow = 0, className = "", children }) {
-  const ref = useRef(null);
-  const [stacked, setStacked] = useState(false);
-
-  useLayoutEffect(() => {
-    const box = ref.current;
-    const check = () => setStacked(box.clientWidth < stackBelow);
-    check(); // before the first paint, so the layout does not jump
-    const observer = new ResizeObserver(check);
-    observer.observe(box);
-    return () => observer.disconnect();
-  }, [stackBelow]);
-
+/* A table that looks the same on every screen size. When its card is narrower than the table, it
+   scrolls sideways inside the card. */
+export function DataTable({ columns, className = "", children }) {
   return (
-    <div ref={ref} className="overflow-x-auto">
-      <table className={`w-full text-left ${className} ${stacked ? "table-stacked" : ""}`}>
+    <div className="overflow-x-auto">
+      <table className={`w-full text-left ${className}`}>
         <thead className="bg-slate-50">
           <tr>
             {columns.map((h) =>

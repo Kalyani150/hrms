@@ -88,25 +88,8 @@ export default function EmployeeDashboard({ user, data, reload }) {
 
           <Card className="overflow-hidden">
             <div className="p-4 sm:p-5"><CardTitle to="/attendance">Recent Attendance</CardTitle></div>
-            {/* Phones: one row per day with the status always visible */}
-            <ul className="divide-y divide-slate-100 sm:hidden">
-              {data.attendance.slice(0, 5).map((a) => (
-                <li key={a._id} className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
-                  <div>
-                    <p className="font-medium text-slate-800">{a.date}</p>
-                    <p className="text-xs text-slate-500">
-                      {time(a.checkIn)} → {a.checkOut ? time(a.checkOut) : "--"}
-                    </p>
-                  </div>
-                  <Badge value={a.status} />
-                </li>
-              ))}
-              {data.attendance.length === 0 && (
-                <li className="px-4 py-10 text-center sm:px-5 text-sm text-slate-400">No attendance yet</li>
-              )}
-            </ul>
-
-            <div className="hidden overflow-x-auto sm:block">
+            {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
+            <div className="overflow-x-auto">
               <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-slate-50">
                   <tr>{["Date", "Check In", "Check Out", "Status"].map((h) =>

@@ -113,6 +113,8 @@ The same rules run in the browser (`frontend/src/utils/validation.js`) and on th
 - **Password:** 8+ characters with an uppercase letter, a lowercase letter, a number and a symbol
 - **Department / designation:** letters (plus spaces and `/ & - .`), 2-50 characters
 - **Salary, basic pay, bonus, deductions and net salary:** 0 to 9,99,999 (below 10 lakh), at most 2 decimals
+- **Monthly total:** all payslips of one month together can be at most 9,99,999 net. The Payroll page shows
+  one month at a time
 - **Leave:** start date today or later (India time), end date not before start date, reason 10-500 characters
 
 ## Security notes
@@ -129,6 +131,5 @@ The same rules run in the browser (`frontend/src/utils/validation.js`) and on th
 
 Summary cards sit four in a row, then two by two, then one per row on very narrow phones, based on the
 space available, so a single card is never left on its own line. Employee and payslip cards follow the
-same pattern. The leave tables (Leaves page and admin dashboard) look the same on every screen size
-and scroll sideways inside their card on small screens. The Attendance, Employees and Payroll tables
-turn into one card per row when there is not enough room for their columns.
+same pattern. Tables look the same on every screen size and scroll sideways inside their card when
+the screen is narrower than the table.

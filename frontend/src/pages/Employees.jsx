@@ -7,7 +7,7 @@ import api from "../api/axios";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard, Pagination,
-  ResponsiveTable, ExpandableText, CardRow, inputCls, btnPrimary, btnGhost, cell
+  DataTable, ExpandableText, CardRow, inputCls, btnPrimary, btnGhost, cell
 } from "../components/ui";
 import FormField from "../components/FormField";
 import PasswordField from "../components/PasswordField";
@@ -308,8 +308,8 @@ export default function Employees() {
         )
       ) : (
         <Card className="overflow-hidden">
-          {/* a table when there is room, one card per employee on smaller screens */}
-          <ResponsiveTable stackBelow={960}
+          {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
+          <DataTable className="min-w-[900px]"
             columns={["Employee", "Contact", "Department", "Designation", "Salary", "Status", "Actions"]}>
             {loading ? <SkeletonRows cols={7} /> : visible.map((emp) => (
               <tr key={emp._id} className="transition hover:bg-slate-50/70">
@@ -322,7 +322,7 @@ export default function Employees() {
                     </div>
                   </div>
                 </td>
-                <td className={cell} data-label="Contact">
+                <td className={cell}>
                   <div>
                     <p>{emp.phone || <span className="text-slate-300">—</span>}</p>
                     {emp.address && (
@@ -330,23 +330,23 @@ export default function Employees() {
                     )}
                   </div>
                 </td>
-                <td className={cell} data-label="Department">
+                <td className={cell}>
                   {emp.department ? (
                     <span className="inline-block rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                       {emp.department}
                     </span>
                   ) : <span className="text-slate-300">—</span>}
                 </td>
-                <td className={cell} data-label="Designation">
+                <td className={cell}>
                   {emp.designation || <span className="text-slate-300">—</span>}
                 </td>
-                <td className={`${cell} whitespace-nowrap font-semibold`} data-label="Salary">₹{emp.salary.toLocaleString("en-IN")}</td>
-                <td className={cell} data-label="Status"><Badge value={emp.status} /></td>
-                <td className={cell} data-label="Actions">{actionButtons(emp)}</td>
+                <td className={`${cell} whitespace-nowrap font-semibold`}>₹{emp.salary.toLocaleString("en-IN")}</td>
+                <td className={cell}><Badge value={emp.status} /></td>
+                <td className={cell}>{actionButtons(emp)}</td>
               </tr>
             ))}
             {!loading && filtered.length === 0 && <EmptyRow cols={7} text="No employees found" />}
-          </ResponsiveTable>
+          </DataTable>
         </Card>
       )}
 

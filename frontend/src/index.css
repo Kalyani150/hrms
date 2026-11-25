@@ -27,51 +27,6 @@ body::-webkit-scrollbar,
   height: 0;
 }
 
-/* ResponsiveTable (components/ui.jsx) in card form. These rules are outside Tailwind's layers,
-   so they override the utility classes on the same elements. */
-.table-stacked { display: block; }
-.table-stacked thead { display: none; }
-.table-stacked tbody {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-  align-items: start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-}
-.table-stacked tr {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-  min-width: 0;
-  padding: 0.875rem;
-  border: 1px solid var(--color-slate-200);
-  border-radius: 1rem;
-}
-.table-stacked tr:has(td[colspan]) { grid-column: 1 / -1; }
-.table-stacked td { display: block; width: auto; min-width: 0; padding: 0; white-space: normal; }
-.table-stacked td > * { min-width: 0; }
-.table-stacked td[data-label] {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  text-align: right;
-}
-.table-stacked td[data-label]::before {
-  content: attr(data-label);
-  flex-shrink: 0;
-  text-align: left;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
-  color: var(--color-slate-400);
-}
-/* long text (such as a leave reason): label on top, text underneath */
-.table-stacked td[data-wide] { flex-direction: column; align-items: stretch; gap: 0.25rem; text-align: left; }
-/* nothing to show, e.g. no actions for this row */
-.table-stacked td[data-empty] { display: none; }
-
 /* Payslip printing: the payslip lives outside #root and is only shown on paper */
 #payslip-print { display: none; }
 

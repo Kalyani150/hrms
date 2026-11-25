@@ -30,6 +30,25 @@ const NET_ERROR = `Net salary cannot be more than ${MAX_AMOUNT.toLocaleString("e
 const netTooHigh = (basic, bonus, deductions) =>
   Math.round(net(basic, bonus, deductions) * 100) / 100 > MAX_AMOUNT; // ignores float rounding noise
 
+const rupees = (n) => n.toLocaleString("en-IN");
+const alreadyExists = { message: "Payroll for this employee and month already exists" };
+
+// All payslips of one month together have the same limit, so the month's "Total net payroll" stays
+// below 10 lakh. Returns an error message when adding `netSalary` would pass it, otherwise "".
+async function monthTotalError(forMonth, netSalary, excludeId) {
+  const [row] = await Payroll.aggregate([
+    { $match: { month: forMonth, ...(excludeId && { _id: { $ne: excludeId } }) } },
+    { $group: { _id: null, total: { $sum: "$netSalary" } } }
+  ]);
+  const others = row?.total || 0;
+  if (Math.round((others + netSalary) * 100) / 100 <= MAX_AMOUNT) return "";
+
+  const left = Math.max(0, Math.round((MAX_AMOUNT - others) * 100) / 100);
+  const label = new Date(`${forMonth}-01T00:00:00Z`)
+    .toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
+  return `Total net payroll for ${label} cannot be more than ${rupees(MAX_AMOUNT)}. Amount left for this payslip: ${rupees(left)}`;
+}
+
 // GET /api/payroll?month=YYYY-MM&status=Pending|Paid
 // Admin: everyone's payslips. Employee: only their own.
 async function listPayroll(req, res) {
@@ -65,6 +84,12 @@ async function createPayroll(req, res, next) {
   }
   if (d.deductions > basic + d.bonus) return res.status(400).json({ message: DEDUCTION_ERROR });
   if (netTooHigh(basic, d.bonus, d.deductions)) return res.status(400).json({ message: NET_ERROR });
+  // checked before the month total, so a repeated payslip is reported as such
+  if (await Payroll.exists({ employee: employee._id, month: d.month })) {
+    return res.status(409).json(alreadyExists);
+  }
+  const totalError = await monthTotalError(d.month, net(basic, d.bonus, d.deductions));
+  if (totalError) return res.status(400).json({ message: totalError });
   try {
     const payroll = await Payroll.create({
       employee: employee._id,
@@ -77,7 +102,7 @@ async function createPayroll(req, res, next) {
     res.status(201).json({ payroll });
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(409).json({ message: "Payroll for this employee and month already exists" });
+      return res.status(409).json(alreadyExists);
     }
     next(err);
   }
@@ -97,6 +122,7 @@ async function updatePayroll(req, res) {
   }
 
   const { updateSalary, ...amounts } = parsed.data;
+  const previousNet = payroll.netSalary;
   payroll.set(amounts);
   if (payroll.deductions > payroll.basic + payroll.bonus) {
     return res.status(400).json({ message: DEDUCTION_ERROR });
@@ -105,6 +131,11 @@ async function updatePayroll(req, res) {
     return res.status(400).json({ message: NET_ERROR });
   }
   payroll.netSalary = net(payroll.basic, payroll.bonus, payroll.deductions);
+  // only an increase is checked, so payslips in a month already over the limit can still be reduced
+  if (payroll.netSalary > previousNet) {
+    const totalError = await monthTotalError(payroll.month, payroll.netSalary, payroll._id);
+    if (totalError) return res.status(400).json({ message: totalError });
+  }
   await payroll.save();
 
   // Optionally carry the new basic over to the employee's profile salary

@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard, Pagination,
-  ResponsiveTable, CardRow, inputCls, btnPrimary, btnGhost, cell
+  DataTable, CardRow, inputCls, btnPrimary, btnGhost, cell
 } from "../components/ui";
 import FormField from "../components/FormField";
 import {
@@ -42,7 +42,7 @@ export default function Payroll() {
   const [deleting, setDeleting] = useState(null); // payslip waiting for delete confirmation
   const [editing, setEditing] = useState(null); // payslip being edited
   const [editForm, setEditForm] = useState({ basic: "", bonus: "", deductions: "", updateSalary: false });
-  const [months, setMonths] = useState([]);
+  const [months, setMonths] = useState(null); // months that have payroll, newest first
   const [form, setForm] = useState({
     employee: "", month: currentMonth(), bonus: "0", deductions: "0"
   });
@@ -62,23 +62,31 @@ export default function Payroll() {
     };
   }, [printSlip]);
 
-  // Months that have payroll, newest first (for the month filter)
+  // The page shows one month at a time: the chosen one, otherwise the latest
+  const shownMonth = months?.includes(month) ? month : months?.[0] || "";
+
   const loadMonths = async () => {
     try {
       const { data } = await api.get("/payroll");
       setMonths([...new Set(data.map((r) => r.month))].sort().reverse());
     } catch {
-      /* the filter just stays empty */
+      setMonths([]);
+      toast.error("Unable to load payroll");
     }
   };
 
   useEffect(() => { loadMonths(); }, []);
 
   const load = async () => {
+    if (!shownMonth) { // no payroll at all
+      setRecords([]);
+      setLoading(false);
+      return;
+    }
     try {
       const { data } = await api.get("/payroll", {
         params: {
-          ...(month && { month }),
+          month: shownMonth,
           ...(status && { status })
         }
       });
@@ -90,7 +98,8 @@ export default function Payroll() {
     }
   };
 
-  useEffect(() => { load(); }, [month, status]);
+  // also runs after the month list is reloaded (a payslip was generated or deleted)
+  useEffect(() => { if (months) load(); }, [months, shownMonth, status]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -141,7 +150,8 @@ export default function Payroll() {
       setForm({
         employee: "", month: currentMonth(), bonus: "0", deductions: "0"
       });
-      load();
+      setMonth(form.month); // show the month that was just generated
+      setPage(1);
       loadMonths();
     } catch (error) {
       toast.error(error.response?.data?.message || "Generation failed");
@@ -153,7 +163,6 @@ export default function Payroll() {
       await api.delete(`/payroll/${deleting._id}`);
       toast.success("Payroll record deleted");
       setDeleting(null);
-      load();
       loadMonths();
     } catch (error) {
       toast.error(error.response?.data?.message || "Delete failed");
@@ -267,7 +276,7 @@ export default function Payroll() {
 
       <CardRow className="min-[400px]:grid-cols-2 @2xl:grid-cols-4">
         <StatCard label="Total net payroll" value={money(sum(records))} Icon={Wallet} tone="blue"
-          hint={`${records.length} payslip${records.length === 1 ? "" : "s"}`} />
+          hint={`${records.length} payslip${records.length === 1 ? "" : "s"} this month`} />
         <StatCard label="Paid" value={money(sum(paid))} Icon={CircleCheck} tone="green"
           hint={`${paid.length} paid`} />
         <StatCard label="Pending" value={money(sum(pending))} Icon={Clock} tone="amber"
@@ -279,7 +288,7 @@ export default function Payroll() {
       <Card className="p-5">
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-slate-700">
-            {month ? monthLabel(month) : "All months"} · payroll progress
+            {shownMonth ? monthLabel(shownMonth) : "No payroll yet"} · payroll progress
           </span>
           <span className="font-semibold text-slate-800">{money(sum(paid))} of {money(sum(records))}</span>
         </div>
@@ -292,10 +301,10 @@ export default function Payroll() {
       <Card className="grid grid-cols-2 items-center gap-3 p-4 sm:flex sm:justify-between">
         {/* phones: month + status share a row, Clear and the view toggle share the next one */}
         <div className="contents sm:flex sm:min-w-0 sm:flex-1 sm:items-center sm:gap-3">
-          <select value={month} onChange={(e) => { setMonth(e.target.value); setPage(1); }}
-            className={`${inputCls} min-w-0 sm:w-44! sm:shrink-0`}>
-            <option value="">All months</option>
-            {months.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
+          <select value={shownMonth} onChange={(e) => { setMonth(e.target.value); setPage(1); }}
+            aria-label="Month" className={`${inputCls} min-w-0 sm:w-44! sm:shrink-0`}>
+            {!months?.length && <option value="">No payroll yet</option>}
+            {months?.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
           </select>
           <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}
             className={`${inputCls} min-w-0 sm:w-40! sm:shrink-0`}>
@@ -303,7 +312,7 @@ export default function Payroll() {
             <option>Pending</option>
             <option>Paid</option>
           </select>
-          {(month || status) && (
+          {(status || shownMonth !== (months?.[0] || "")) && (
             <button onClick={() => { setMonth(""); setStatus(""); setPage(1); }}
               className="justify-self-start text-sm font-medium text-blue-600 hover:underline sm:shrink-0">Clear</button>
           )}
@@ -381,8 +390,8 @@ export default function Payroll() {
         )
       ) : (
         <Card className="overflow-hidden">
-          {/* a table when there is room, one card per payslip on smaller screens */}
-          <ResponsiveTable stackBelow={1000}
+          {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
+          <DataTable className="min-w-[1000px]"
             columns={["Employee", "Month", "Basic", "Bonus", "Deductions", "Net Salary", "Status", "Action"]}>
             {loading ? <SkeletonRows cols={8} /> : visible.map((r) => (
               <tr key={r._id} className="transition hover:bg-slate-50/70">
@@ -392,16 +401,16 @@ export default function Payroll() {
                     <span className="font-medium text-slate-800">{r.employee?.name}</span>
                   </div>
                 </td>
-                <td className={`${cell} whitespace-nowrap`} data-label="Month">{monthLabel(r.month)}</td>
-                <td className={`${cell} whitespace-nowrap`} data-label="Basic">{money(r.basic)}</td>
-                <td className={`${cell} whitespace-nowrap`} data-label="Bonus">
+                <td className={`${cell} whitespace-nowrap`}>{monthLabel(r.month)}</td>
+                <td className={`${cell} whitespace-nowrap`}>{money(r.basic)}</td>
+                <td className={`${cell} whitespace-nowrap`}>
                   <span className="text-emerald-600">{r.bonus ? `+ ${money(r.bonus)}` : money(0)}</span>
                 </td>
-                <td className={`${cell} whitespace-nowrap`} data-label="Deductions">
+                <td className={`${cell} whitespace-nowrap`}>
                   <span className="text-rose-600">{r.deductions ? `− ${money(r.deductions)}` : money(0)}</span>
                 </td>
-                <td className={`${cell} whitespace-nowrap font-bold`} data-label="Net Salary">{money(r.netSalary)}</td>
-                <td className={cell} data-label="Status"><Badge value={r.status} /></td>
+                <td className={`${cell} whitespace-nowrap font-bold`}>{money(r.netSalary)}</td>
+                <td className={cell}><Badge value={r.status} /></td>
                 <td className={cell}>
                   <div className="flex min-w-44 flex-wrap gap-2">
                     {payAction(r)}
@@ -412,7 +421,7 @@ export default function Payroll() {
               </tr>
             ))}
             {!loading && records.length === 0 && <EmptyRow cols={8} text="No payroll records" />}
-          </ResponsiveTable>
+          </DataTable>
         </Card>
       )}
 

@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, Field, Modal, StatCard,
-  ResponsiveTable, ExpandableText, CardRow, inputCls, btnPrimary, btnGhost, cell
+  DataTable, ExpandableText, CardRow, inputCls, btnPrimary, btnGhost, cell
 } from "../components/ui";
 import FormField from "../components/FormField";
 import {
@@ -119,7 +119,7 @@ export default function Leaves() {
         </div>
 
         {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
-        <ResponsiveTable className="min-w-[720px]"
+        <DataTable className="min-w-[720px]"
           columns={["Employee", "Type", "Duration", "Reason", "Status"]}>
           {loading ? <SkeletonRows cols={5} /> : shown.map((l) => (
             <tr key={l._id} className="transition hover:bg-slate-50/70">
@@ -156,7 +156,7 @@ export default function Leaves() {
             </tr>
           ))}
           {!loading && shown.length === 0 && <EmptyRow cols={5} text="No leave requests found" />}
-        </ResponsiveTable>
+        </DataTable>
       </Card>
 
       {showForm && (
