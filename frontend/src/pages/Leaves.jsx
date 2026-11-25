@@ -105,7 +105,8 @@ export default function Leaves() {
       </CardRow>
 
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap gap-2 border-b border-slate-100 p-4">
+        {/* phones: an even 2 x 2 block instead of one button left over on a second line */}
+        <div className="grid grid-cols-2 gap-2 border-b border-slate-100 p-3 sm:flex sm:flex-wrap sm:p-4">
           {tabs.map((t) => (
             <button key={t} onClick={() => setFilter(t)}
               className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
@@ -119,14 +120,15 @@ export default function Leaves() {
         </div>
 
         {/* same table on every screen size; it scrolls sideways inside the card on small screens */}
-        <DataTable className="min-w-[720px]"
+        {/* on phones long names are cut to one line, so rows are the same height and columns stay compact */}
+        <DataTable className="min-w-[640px] sm:min-w-[720px]"
           columns={["Employee", "Type", "Duration", "Reason", "Status"]}>
           {loading ? <SkeletonRows cols={5} /> : shown.map((l) => (
             <tr key={l._id} className="transition hover:bg-slate-50/70">
               <td className={cell}>
-                <div className="flex items-center gap-3">
-                  <Avatar name={l.employee?.name} size="h-9 w-9 text-xs" />
-                  <div className="min-w-32">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <Avatar name={l.employee?.name} size="h-8 w-8 text-[11px] sm:h-9 sm:w-9 sm:text-xs" />
+                  <div className="max-sm:w-32 max-sm:*:truncate sm:min-w-32">
                     <p className="font-medium text-slate-800">{l.employee?.name}</p>
                     {l.employee?.department && (
                       <p className="text-xs text-slate-500">{l.employee.department}</p>
@@ -149,8 +151,8 @@ export default function Leaves() {
                   </p>
                 </div>
               </td>
-              <td className={`${cell} w-1/3`}>
-                <ExpandableText text={l.reason} empty="No reason provided" className="min-w-48" />
+              <td className={`${cell} sm:w-1/3`}>
+                <ExpandableText text={l.reason} empty="No reason provided" className="min-w-40 sm:min-w-48" />
               </td>
               <td className={cell}><Badge value={l.status} /></td>
             </tr>
