@@ -13,7 +13,7 @@ import {
 } from "../components/ui";
 import FormField from "../components/FormField";
 import {
-  validateAmount, validateDeductions, validateSelect, validateMonth, isValid, MAX_AMOUNT
+  validateAmount, validateDeductions, validateNet, validateSelect, validateMonth, isValid, MAX_AMOUNT
 } from "../utils/validation";
 
 const PAGE_SIZE = 4; // payslips per page
@@ -109,7 +109,9 @@ export default function Payroll() {
         ? `Salary is more than ${MAX_AMOUNT.toLocaleString("en-IN")}. Edit the employee's salary first.`
         : ""),
     month: validateMonth(form.month),
-    bonus: validateAmount(form.bonus, "Bonus"),
+    // the net limit is reported under Bonus, the field that pushes a salary over it
+    bonus: validateAmount(form.bonus, "Bonus") ||
+      validateNet(selectedEmployee?.salary, form.bonus, form.deductions),
     deductions: validateDeductions(selectedEmployee?.salary, form.bonus, form.deductions)
   };
   const singleValid = isValid(singleErrors);
@@ -117,7 +119,8 @@ export default function Payroll() {
   const editErrors = {
     basic: validateAmount(editForm.basic, "Basic pay"),
     bonus: validateAmount(editForm.bonus, "Bonus"),
-    deductions: validateDeductions(editForm.basic, editForm.bonus, editForm.deductions)
+    deductions: validateDeductions(editForm.basic, editForm.bonus, editForm.deductions),
+    net: validateNet(editForm.basic, editForm.bonus, editForm.deductions)
   };
   const editValid = isValid(editErrors);
 
@@ -489,6 +492,9 @@ export default function Payroll() {
               <span className="text-sm text-blue-700">New net salary</span>
               <span className="text-xl font-bold text-blue-800">{money(editNet)}</span>
             </div>
+            {editErrors.net && (
+              <p className="text-xs font-medium text-rose-600" role="alert">{editErrors.net}</p>
+            )}
 
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={() => setModal(null)} className={btnGhost}>Cancel</button>

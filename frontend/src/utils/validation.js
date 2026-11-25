@@ -99,6 +99,13 @@ export function validateDeductions(basic, bonus, deductions) {
     ? "Deductions cannot be more than basic pay plus bonus" : "";
 }
 
+// Net salary (basic + bonus - deductions) has the same limit as the other amounts
+export function validateNet(basic, bonus, deductions) {
+  const net = Number(basic || 0) + Number(bonus || 0) - Number(deductions || 0);
+  return Math.round(net * 100) / 100 > MAX_AMOUNT
+    ? `Net salary cannot be more than ${MAX_AMOUNT.toLocaleString("en-IN")}` : "";
+}
+
 export const validateSelect = (value, label = "an option") =>
   value ? "" : `Please select ${label}`;
 

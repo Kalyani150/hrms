@@ -112,7 +112,7 @@ The same rules run in the browser (`frontend/src/utils/validation.js`) and on th
 - **Phone:** optional, exactly 10 digits
 - **Password:** 8+ characters with an uppercase letter, a lowercase letter, a number and a symbol
 - **Department / designation:** letters (plus spaces and `/ & - .`), 2-50 characters
-- **Salary, basic pay, bonus, deductions:** 0 to 9,99,999 (below 10 lakh), at most 2 decimals
+- **Salary, basic pay, bonus, deductions and net salary:** 0 to 9,99,999 (below 10 lakh), at most 2 decimals
 - **Leave:** start date today or later (India time), end date not before start date, reason 10-500 characters
 
 ## Security notes

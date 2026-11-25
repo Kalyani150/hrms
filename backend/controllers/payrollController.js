@@ -25,6 +25,11 @@ const DEDUCTION_ERROR = "Deductions cannot be more than basic pay plus bonus";
 
 const net = (basic, bonus, deductions) => Math.max(0, basic + bonus - deductions);
 
+// Net salary has the same limit as the other amounts (basic and bonus together could pass it)
+const NET_ERROR = `Net salary cannot be more than ${MAX_AMOUNT.toLocaleString("en-IN")}`;
+const netTooHigh = (basic, bonus, deductions) =>
+  Math.round(net(basic, bonus, deductions) * 100) / 100 > MAX_AMOUNT; // ignores float rounding noise
+
 // GET /api/payroll?month=YYYY-MM&status=Pending|Paid
 // Admin: everyone's payslips. Employee: only their own.
 async function listPayroll(req, res) {
@@ -59,6 +64,7 @@ async function createPayroll(req, res, next) {
     });
   }
   if (d.deductions > basic + d.bonus) return res.status(400).json({ message: DEDUCTION_ERROR });
+  if (netTooHigh(basic, d.bonus, d.deductions)) return res.status(400).json({ message: NET_ERROR });
   try {
     const payroll = await Payroll.create({
       employee: employee._id,
@@ -94,6 +100,9 @@ async function updatePayroll(req, res) {
   payroll.set(amounts);
   if (payroll.deductions > payroll.basic + payroll.bonus) {
     return res.status(400).json({ message: DEDUCTION_ERROR });
+  }
+  if (netTooHigh(payroll.basic, payroll.bonus, payroll.deductions)) {
+    return res.status(400).json({ message: NET_ERROR });
   }
   payroll.netSalary = net(payroll.basic, payroll.bonus, payroll.deductions);
   await payroll.save();
