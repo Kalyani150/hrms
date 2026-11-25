@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Users, CalendarDays, Wallet, ArrowRight, LogIn, LogOut, Clock, UserMinus, Sparkles, Mail, Phone, IdCard, Briefcase } from "lucide-react";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
-import { Card, Avatar, Badge, StatCard, LeaveReason, CardRow, btnPrimary, th, td } from "../ui";
+import { Card, Avatar, Badge, StatCard, ExpandableText, CardRow, btnPrimary, th, td } from "../ui";
 import { money, time, short, greeting, Hero, HeroAction, CardTitle, HoursChart } from "./parts";
 
 export default function EmployeeDashboard({ user, data, reload }) {
@@ -201,7 +201,7 @@ export default function EmployeeDashboard({ user, data, reload }) {
                       </div>
                       <Badge value={l.status} />
                     </div>
-                    <LeaveReason text={l.reason} className="mt-1 text-xs text-slate-600" />
+                    <ExpandableText text={l.reason} empty="No reason provided" className="mt-1 text-xs text-slate-600" />
                   </div>
                 </li>
               ))}

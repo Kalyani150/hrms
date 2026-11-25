@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, Field, Modal, StatCard,
-  ResponsiveTable, LeaveReason, CardRow, inputCls, btnPrimary, btnGhost, cell
+  ResponsiveTable, ExpandableText, CardRow, inputCls, btnPrimary, btnGhost, cell
 } from "../components/ui";
 import FormField from "../components/FormField";
 import {
@@ -150,7 +150,7 @@ export default function Leaves() {
                 </div>
               </td>
               <td className={`${cell} w-1/3`} data-label="Reason" data-wide>
-                <LeaveReason text={l.reason} className="min-w-48" collapsible />
+                <ExpandableText text={l.reason} empty="No reason provided" className="min-w-48" />
               </td>
               <td className={cell} data-label="Status"><Badge value={l.status} /></td>
             </tr>

@@ -7,7 +7,7 @@ import api from "../api/axios";
 import toast from "react-hot-toast";
 import {
   PageHeader, Card, Avatar, Badge, EmptyRow, SkeletonRows, SkeletonCards, Modal, StatCard, Pagination,
-  ResponsiveTable, CardRow, inputCls, btnPrimary, btnGhost, cell
+  ResponsiveTable, ExpandableText, CardRow, inputCls, btnPrimary, btnGhost, cell
 } from "../components/ui";
 import FormField from "../components/FormField";
 import PasswordField from "../components/PasswordField";
@@ -326,16 +326,20 @@ export default function Employees() {
                   <div>
                     <p>{emp.phone || <span className="text-slate-300">—</span>}</p>
                     {emp.address && (
-                      <p className="text-xs text-slate-500 [overflow-wrap:anywhere]">{emp.address}</p>
+                      <ExpandableText text={emp.address} className="text-xs text-slate-500" />
                     )}
                   </div>
                 </td>
                 <td className={cell} data-label="Department">
-                  <span className="inline-block rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                    {emp.department}
-                  </span>
+                  {emp.department ? (
+                    <span className="inline-block rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                      {emp.department}
+                    </span>
+                  ) : <span className="text-slate-300">—</span>}
                 </td>
-                <td className={cell} data-label="Designation">{emp.designation}</td>
+                <td className={cell} data-label="Designation">
+                  {emp.designation || <span className="text-slate-300">—</span>}
+                </td>
                 <td className={`${cell} whitespace-nowrap font-semibold`} data-label="Salary">₹{emp.salary.toLocaleString("en-IN")}</td>
                 <td className={cell} data-label="Status"><Badge value={emp.status} /></td>
                 <td className={cell} data-label="Actions">{actionButtons(emp)}</td>

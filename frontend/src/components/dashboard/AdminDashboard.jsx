@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Check, Users, CalendarDays, Wallet, CalendarCheck, X, UserPlus, ClipboardCheck, BadgeIndianRupee, UserCheck, CircleCheck, Building2 } from "lucide-react";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
-import { Card, Avatar, Badge, StatCard, ResponsiveTable, LeaveReason, CardRow, cell } from "../ui";
+import { Card, Avatar, Badge, StatCard, ResponsiveTable, ExpandableText, CardRow, cell } from "../ui";
 import { money, time, short, greeting, Hero, HeroAction, CardTitle, MiniStat, AttendanceChart, DepartmentBars } from "./parts";
 
 export default function AdminDashboard({ user, data, reload }) {
@@ -92,7 +92,7 @@ export default function AdminDashboard({ user, data, reload }) {
         <Card className="overflow-hidden">
           <div className="p-4 sm:p-5"><CardTitle to="/leaves">Leave Management</CardTitle></div>
           {/* a table when there is room, one card per request on smaller screens */}
-          <ResponsiveTable stackBelow={600}
+          <ResponsiveTable stackBelow={640}
             columns={["Employee", "Leave & Reason", "Date", "Status", "Action"]}>
             {data.recentLeaves.map((l) => (
               <tr key={l._id} className="hover:bg-slate-50/70">
@@ -105,10 +105,10 @@ export default function AdminDashboard({ user, data, reload }) {
                 <td className={`${cell} w-2/5`} data-label="Leave & Reason" data-wide>
                   <div className="min-w-36">
                     <p className="font-medium text-slate-800">{l.type}</p>
-                    <LeaveReason text={l.reason} className="mt-0.5 text-xs text-slate-500" />
+                    <ExpandableText text={l.reason} empty="No reason provided" className="mt-0.5 text-xs text-slate-500" />
                   </div>
                 </td>
-                <td className={cell} data-label="Date">
+                <td className={`${cell} whitespace-nowrap`} data-label="Date">
                   {l.startDate === l.endDate
                     ? short(l.startDate)
                     : `${short(l.startDate)} – ${short(l.endDate)}`}

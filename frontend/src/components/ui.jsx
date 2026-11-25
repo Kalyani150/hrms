@@ -68,20 +68,20 @@ export function ResponsiveTable({ columns, stackBelow, children }) {
   );
 }
 
-const PREVIEW_LENGTH = 20; // characters of a collapsed leave reason
+const PREVIEW_LENGTH = 20; // characters of long text shown while collapsed
 
-/* A leave reason; long words wrap instead of widening the layout. With `collapsible`, only the start of
-   it is shown until the text is double-clicked; double-clicking again shortens it (nothing on hover). */
-export function LeaveReason({ text, className = "", collapsible = false }) {
+/* Long free text (a leave reason, an address): only the start is shown until it is double-clicked;
+   double-clicking again shortens it (nothing on hover). Long words wrap instead of widening the layout. */
+export function ExpandableText({ text, empty = "—", className = "" }) {
   const [open, setOpen] = useState(false);
-  const long = collapsible && (text || "").length > PREVIEW_LENGTH;
+  const long = (text || "").length > PREVIEW_LENGTH;
   const shown = long && !open ? `${text.slice(0, PREVIEW_LENGTH).trimEnd()}…` : text;
 
   return (
     // touch-manipulation: a double tap on a phone reaches the text instead of zooming the page
     <p onDoubleClick={long ? () => setOpen(!open) : undefined}
       className={`[overflow-wrap:anywhere] ${long ? "cursor-pointer touch-manipulation select-none" : ""} ${className}`}>
-      {shown || <span className="text-slate-400">No reason provided</span>}
+      {shown || <span className="text-slate-400">{empty}</span>}
     </p>
   );
 }
