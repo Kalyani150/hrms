@@ -71,7 +71,8 @@ export const miniTones = {
 };
 
 // Compact clickable stat for the second row: icon beside the text at every width, so the cards always
-// match each other. Phones get tighter spacing.
+// match each other. Phones get tighter spacing. The hint sits at the right of a wide card, and at the
+// right of the number on a narrow one.
 export function MiniStat({ label, value, hint, Icon, tone, to }) {
   return (
     <Link to={to} className="@container block rounded-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
@@ -80,7 +81,10 @@ export function MiniStat({ label, value, hint, Icon, tone, to }) {
         <span className={`shrink-0 rounded-xl p-2.5 sm:p-3 ${miniTones[tone]}`}><Icon size={20} /></span>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-slate-500">{label}</p>
-          <p className="text-2xl font-bold leading-tight text-slate-800">{value}</p>
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-2xl font-bold leading-tight text-slate-800">{value}</p>
+            <p className="min-w-0 text-right text-xs text-slate-400 @min-[19rem]:hidden">{hint}</p>
+          </div>
         </div>
         <p className="hidden text-right text-xs text-slate-400 @min-[19rem]:block">{hint}</p>
       </Card>
