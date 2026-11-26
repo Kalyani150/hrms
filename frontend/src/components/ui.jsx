@@ -105,53 +105,51 @@ const tiles = {
   rose: "from-rose-400 to-rose-600 shadow-rose-200"
 };
 
-export function StatCard({ label, value, hint, Icon, tone = "blue", to, onClick, active }) {
-  const clickable = !!(to || onClick);
+/* Takes two rows of the surrounding CardRow (body + footer) and shares their heights with the other
+   cards in that row, so the divider lines match even when a label or hint wraps in only one card. */
+const statRows = "row-span-2 grid grid-cols-1 grid-rows-subgrid gap-y-0";
+
+export function StatCard({ label, value, hint, Icon, tone = "blue", to }) {
   const card = (
-    // h-full + flex: cards in a row are the same height and their footers line up
-    <Card className={`@container flex h-full flex-col p-0 transition hover:-translate-y-0.5 hover:shadow-md ${
-      clickable ? "cursor-pointer hover:border-blue-200" : ""} ${
-      active ? "border-blue-400 ring-4 ring-blue-100" : ""}`}>
+    // no @container on the card itself: it would stop the card sharing the row heights
+    <Card className={`${statRows} p-0 transition hover:-translate-y-0.5 hover:shadow-md ${
+      to ? "cursor-pointer hover:border-blue-200" : ""}`}>
       {/* In a narrow card the value gets the full width under the label and icon */}
-      <div className="grid flex-1 grid-cols-[minmax(0,1fr)_auto] content-start gap-x-2 p-4 sm:p-5">
-        <p className="col-start-1 row-start-1 text-xs font-medium text-slate-500 sm:text-sm">{label}</p>
-        <span className={`col-start-2 row-start-1 self-start rounded-xl bg-linear-to-br p-2 text-white shadow-lg @min-[14rem]:row-span-2 sm:rounded-2xl sm:p-3 ${tiles[tone]}`}>
-          <Icon className="h-[18px] w-[18px] sm:h-[22px] sm:w-[22px]" />
-        </span>
-        <p className={`col-start-1 row-start-2 mt-1.5 font-bold tracking-tight text-slate-800 [overflow-wrap:anywhere] @max-[14rem]:col-span-2 sm:mt-2 ${
-          // long values (large amounts) shrink with the card instead of breaking mid-number
-          String(value).length > 8
-            ? "text-[length:clamp(1rem,10cqi,1.5rem)] 2xl:text-[length:clamp(1rem,10cqi,1.875rem)]"
-            : "text-lg sm:text-2xl 2xl:text-3xl"
-        }`}>
-          {value}
-        </p>
-      </div>
-      <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-4 py-2.5 text-[11px] text-slate-500 sm:px-5 sm:py-3 sm:text-xs">
-        <span className="min-w-0 [overflow-wrap:anywhere]">{hint}</span>
-        {to && (
-          <span className="flex shrink-0 items-center gap-1 font-medium text-blue-600">
-            <span className="hidden @min-[14rem]:inline">Details</span> <ArrowRight size={13} />
+      <div className="@container">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] content-start gap-x-2 p-4 sm:p-5">
+          <p className="col-start-1 row-start-1 text-xs font-medium text-slate-500 sm:text-sm">{label}</p>
+          <span className={`col-start-2 row-start-1 self-start rounded-xl bg-linear-to-br p-2 text-white shadow-lg @min-[14rem]:row-span-2 sm:rounded-2xl sm:p-3 ${tiles[tone]}`}>
+            <Icon className="h-[18px] w-[18px] sm:h-[22px] sm:w-[22px]" />
           </span>
-        )}
+          <p className={`col-start-1 row-start-2 mt-1.5 font-bold tracking-tight text-slate-800 [overflow-wrap:anywhere] @max-[14rem]:col-span-2 sm:mt-2 ${
+            // long values (large amounts) shrink with the card instead of breaking mid-number
+            String(value).length > 8
+              ? "text-[length:clamp(1rem,10cqi,1.5rem)] 2xl:text-[length:clamp(1rem,10cqi,1.875rem)]"
+              : "text-lg sm:text-2xl 2xl:text-3xl"
+          }`}>
+            {value}
+          </p>
+        </div>
+      </div>
+      <div className="@container border-t border-slate-100">
+        <div className="flex h-full items-center justify-between gap-2 px-4 py-2.5 text-[11px] text-slate-500 sm:px-5 sm:py-3 sm:text-xs">
+          <span className="min-w-0 [overflow-wrap:anywhere]">{hint}</span>
+          {to && (
+            <span className="flex shrink-0 items-center gap-1 font-medium text-blue-600">
+              <span className="hidden @min-[14rem]:inline">Details</span> <ArrowRight size={13} />
+            </span>
+          )}
+        </div>
       </div>
     </Card>
   );
 
-  // The whole card is the link / button
+  // The whole card is the link
   if (to) {
     return (
-      <Link to={to} className="block h-full rounded-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
+      <Link to={to} className={`${statRows} rounded-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200`}>
         {card}
       </Link>
-    );
-  }
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} aria-pressed={!!active}
-        className="block w-full rounded-2xl text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
-        {card}
-      </button>
     );
   }
   return card;
