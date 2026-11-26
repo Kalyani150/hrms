@@ -66,7 +66,7 @@ export default function AdminDashboard({ user, data, reload }) {
       </CardRow>
 
       {/* below 400px: one per row. From 400px: two, with the third filling its row. Wide: all three. */}
-      <CardRow className="min-[400px]:@max-lg:grid-cols-2 min-[400px]:@max-lg:[&>:last-child]:col-span-2 @lg:grid-cols-3">
+      <CardRow className="min-[400px]:@max-2xl:grid-cols-2 min-[400px]:@max-2xl:[&>:last-child]:col-span-2 @2xl:grid-cols-3">
         <MiniStat label="Active Employees" value={data.activeEmployees} Icon={UserCheck} tone="green"
           hint={`of ${data.totalEmployees} total`} to="/employees" />
         <MiniStat label="Approved Leaves" value={data.approvedLeaves} Icon={CircleCheck} tone="blue"
