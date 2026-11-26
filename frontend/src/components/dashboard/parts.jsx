@@ -70,17 +70,20 @@ export const miniTones = {
   violet: "bg-violet-50 text-violet-600"
 };
 
-// Compact clickable stat for the second row
+// Compact clickable stat for the second row. A narrow card (three in a row on a small screen) stacks
+// icon, number and label in the middle; a wider one puts the icon beside the text.
 export function MiniStat({ label, value, hint, Icon, tone, to }) {
   return (
-    <Link to={to} className="block rounded-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
-      <Card className="flex items-center gap-3 p-3 transition sm:gap-4 sm:p-4 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+    <Link to={to} className="@container block rounded-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200">
+      {/* h-full: all cards in the row stay the same height even if one label wraps */}
+      <Card className="flex h-full flex-col items-center gap-2 p-3 text-center transition @min-[13rem]:flex-row @min-[13rem]:gap-4 @min-[13rem]:p-4 @min-[13rem]:text-left hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
         <span className={`shrink-0 rounded-xl p-2.5 sm:p-3 ${miniTones[tone]}`}><Icon size={20} /></span>
-        <div className="min-w-0 flex-1">
+        {/* stacked: number first, so the numbers line up even when a label takes two lines */}
+        <div className="flex min-w-0 flex-col-reverse @min-[13rem]:flex-1 @min-[13rem]:flex-col">
           <p className="text-xs font-medium text-slate-500">{label}</p>
           <p className="text-2xl font-bold leading-tight text-slate-800">{value}</p>
         </div>
-        <p className="hidden text-right text-xs text-slate-400 sm:block md:hidden xl:block">{hint}</p>
+        <p className="hidden text-right text-xs text-slate-400 @min-[19rem]:block">{hint}</p>
       </Card>
     </Link>
   );
